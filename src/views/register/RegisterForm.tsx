@@ -1,191 +1,257 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { registerWithEmail } from "@/firebase/auth";
-const roles = ["Student", "Lecturer"] as const;
-const onSubmit = async (data: RegisterFormValues) => {
-  try {
-    // Step 1: Check if the username is available
-    const usernameCheckRes = await fetch(
-      `http://localhost:3000/api/users/check-username?username=${data.username}`
-    );
-    if (usernameCheckRes.status === 409) {
-      const error = await usernameCheckRes.json();
-      alert(error.message || "Username is taken");
-      return;
-    }
 
-    if (usernameCheckRes.status !== 200 && usernameCheckRes.status !== 304) {
-      alert("Something went wrong checking the username");
-      return;
-    }
+type RegisterFormProps = {
+  role: "Student" | "Lecturer";
+};
 
-    // Step 2: Proceed with Firebase Authentication
-    const { user, token } = await registerWithEmail(
-      data.email,
-      data.password,
-      data.name
-    );
-
-    console.log("✅ Firebase user created:", user);
-
-    // Step 3: Send user data to the backend to create the Firestore document
-    const res = await fetch("http://localhost:3000/api/users/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        uid: user.uid,
-        username: data.username,
-        role: data.role,
-        email: data.email,
-        fullName: data.name,
+const createSchema = (role: "Student" | "Lecturer") =>
+  z
+    .object({
+      name: z.string().min(2, "Name must be at least 2 characters"),
+      username: z
+        .string()
+        .min(3, "Username must be at least 3 characters")
+        .max(20, "Username must not exceed 20 characters")
+        .regex(
+          /^[a-zA-Z0-9_]+$/,
+          "Username can only contain letters, numbers, and underscores"
+        ),
+      university: z.enum(["UTM"], {
+        errorMap: () => ({ message: "Please choose a university" }),
       }),
+      email: z
+        .string()
+        .email("Invalid email address")
+        .refine(
+          (val) =>
+            role === "Student"
+              ? val.endsWith("@graduate.utm.my")
+              : val.endsWith("@utm.my"),
+          {
+            message:
+              role === "Student"
+                ? "Must end with @graduate.utm.my"
+                : "Must end with @utm.my",
+          }
+        ),
+      password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .max(32, "Too long")
+        .regex(
+          /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/,
+          "Must include one letter and one number"
+        ),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
     });
 
-    if (!res.ok) {
-      const error = await res.json();
-      alert(error.message || "Something went wrong");
-      return;
-    }
+type RegisterFormValues = z.infer<ReturnType<typeof createSchema>>;
 
-    alert("✅ Registered successfully and sent to backend!");
-  } catch (err: any) {
-    alert(`❌ Error: ${err.message}`);
-    console.error(err);
-  }
-};
-const RegisterSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(20, "Username must not exceed 20 characters")
-      .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores"
-      ),
-    email: z.string().email("Invalid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(32, "Too long")
-      .regex(
-        /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/,
-        "Password must contain at least one letter and one number"
-      ),
-    confirmPassword: z.string(),
-    role: z.enum(roles, {
-      errorMap: () => ({ message: "Please select a role" }),
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormValues = z.infer<typeof RegisterSchema>;
-
-export default function RegisterForm() {
+export default function RegisterForm({ role }: RegisterFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<RegisterFormValues>({
-    resolver: zodResolver(RegisterSchema),
+    resolver: zodResolver(createSchema(role)),
   });
+
+  const universityValue = watch("university");
+  const isUniversitySelected = !!universityValue;
+
+  const emailPlaceholder =
+    role === "Student" ? "example@graduate.utm.my" : "example@utm.my";
+
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      const usernameCheckRes = await fetch(
+        `http://localhost:3000/api/users/check-username?username=${data.username}`
+      );
+
+      if (usernameCheckRes.status === 409) {
+        const error = await usernameCheckRes.json();
+        alert(error.message || "Username is taken");
+        return;
+      }
+
+      if (usernameCheckRes.status !== 200 && usernameCheckRes.status !== 304) {
+        alert("Something went wrong checking the username");
+        return;
+      }
+
+      const { user, token } = await registerWithEmail(
+        data.email,
+        data.password,
+        data.name
+      );
+
+      const res = await fetch("http://localhost:3000/api/users/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          username: data.username,
+          role,
+          email: data.email,
+          fullName: data.name,
+          university: data.university,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.message || "Something went wrong");
+        return;
+      }
+
+      alert("✅ Registered successfully!");
+    } catch (err: any) {
+      alert(`❌ Error: ${err.message}`);
+      console.error(err);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Generic Field Component */}
-      {[
-        {
-          label: "Full Name",
-          id: "name",
-          type: "text",
-          placeholder: "Your Full Name",
-        },
-        {
-          label: "Username",
-          id: "username",
-          type: "text",
-          placeholder: "your_username",
-        },
-        {
-          label: "Email",
-          id: "email",
-          type: "email",
-          placeholder: "you@example.com",
-        },
-        {
-          label: "Password",
-          id: "password",
-          type: "password",
-          placeholder: "••••••••",
-        },
-        {
-          label: "Confirm Password",
-          id: "confirmPassword",
-          type: "password",
-          placeholder: "••••••••",
-        },
-      ].map(({ label, id, type, placeholder }) => (
-        <div key={id}>
-          <label className="block mb-1 text-sm font-medium text-gray-700">
-            {label}
-          </label>
-          <input
-            {...register(id as keyof RegisterFormValues)}
-            type={type}
-            placeholder={placeholder}
-            className="w-full px-8 py-3 text-base border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition duration-150"
-          />
-          {errors[id as keyof RegisterFormValues] && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors[id as keyof RegisterFormValues]?.message?.toString()}
-            </p>
-          )}
-        </div>
-      ))}
-
-      {/* Role Selector */}
+      {/* Full Name */}
       <div>
         <label className="block mb-1 text-sm font-medium text-gray-700">
-          Role
+          Full Name
         </label>
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileFocus={{ scale: 1.03 }}
-          transition={{ duration: 0.2 }}
-          className="w-full"
+        <input
+          {...register("name")}
+          placeholder="Your Full Name"
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+
+          }`}
+        />
+        {errors.name && (
+          <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+        )}
+      </div>
+
+      {/* Username */}
+      <div>
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          Username
+        </label>
+        <input
+          {...register("username")}
+          placeholder="your_username"
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          }`}
+        />
+        {errors.username && (
+          <p className="text-sm text-red-500 mt-1">{errors.username.message}</p>
+        )}
+      </div>
+
+      {/* University Selector */}
+      <div>
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          University
+        </label>
+        <select
+          {...register("university")}
+          className="w-full px-8 py-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-blue-300 focus:outline-none focus:ring-2"
         >
-          <select
-            {...register("role")}
-            className="w-full px-8 py-3 text-base border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition duration-150"
-          >
-            <option value="">Select your role</option>
-            {roles.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-        </motion.div>
-        {errors.role && (
-          <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>
+          <option value="">Select your university</option>
+          <option value="UTM">UTM</option>
+        </select>
+        {errors.university && (
+          <p className="text-sm text-red-500 mt-1">
+            {errors.university.message}
+          </p>
+        )}
+      </div>
+
+      {/* Email */}
+      <div>
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          Email
+        </label>
+        <input
+          {...register("email")}
+          type="email"
+          placeholder={isUniversitySelected ? emailPlaceholder : ""}
+          disabled={!isUniversitySelected}
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 ${
+            isUniversitySelected
+              ? "bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+        {errors.email && (
+          <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div>
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          Password
+        </label>
+        <input
+          {...register("password")}
+          type="password"
+          disabled={!isUniversitySelected}
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 ${
+            isUniversitySelected
+              ? "bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+        {errors.password && (
+          <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+        )}
+      </div>
+
+      {/* Confirm Password */}
+      <div>
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          Confirm Password
+        </label>
+        <input
+          {...register("confirmPassword")}
+          type="password"
+          disabled={!isUniversitySelected}
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 ${
+            isUniversitySelected
+              ? "bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+        {errors.confirmPassword && (
+          <p className="text-sm text-red-500 mt-1">
+            {errors.confirmPassword.message}
+          </p>
         )}
       </div>
 
       {/* Submit Button */}
-      <motion.div whileHover={{ scale: 1.03 }}>
+      <motion.div whileHover={{ scale: isUniversitySelected ? 1.03 : 1 }}>
         <Button
           type="submit"
-          className="w-full bg-green-500 text-white px-8 py-6 text-lg hover:bg-green-600 transition-all duration-200 shadow-lg"
+          disabled={!isUniversitySelected}
+          className={`w-full px-8 py-6 text-lg shadow-lg transition-all duration-200 ${
+            isUniversitySelected
+              ? "bg-green-500 hover:bg-green-600 text-white"
+              : "bg-gray-300 cursor-not-allowed"
+          }`}
         >
           Register
         </Button>

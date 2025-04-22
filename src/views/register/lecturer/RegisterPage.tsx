@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import RegisterForm from "./RegisterForm";
+import RegisterForm from "../RegisterForm";
 const RegisterPage = () => {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-tr from-sky-100 via-white to-green-100 flex flex-col justify-center items-center px-4">
@@ -35,7 +35,7 @@ const RegisterPage = () => {
         className="flex flex-col gap-4 w-full max-w-sm"
       >
         <div className="bg-white p-6 rounded-lg shadow-md w-full">
-          <RegisterForm />
+          <RegisterForm role="Lecturer" />
         </div>
       </motion.div>
     </div>
