@@ -37,10 +37,16 @@ const WelcomePage = () => {
         transition={{ delay: 0.6, duration: 0.5 }}
         className="flex flex-col gap-4 w-full max-w-sm"
       >
-        <Button className="bg-white px-8 py-6 text-lg hover:bg-gray-100 transition-all duration-200 shadow-md">
+        <Button
+          className="bg-white px-8 py-6 text-lg hover:bg-gray-100 transition-all duration-200 shadow-md"
+          onClick={() => navigate("/student/login")}
+        >
           I’m a Student!
         </Button>
-        <Button className="bg-white px-8 py-6 text-lg hover:bg-gray-100 transition-all duration-200 shadow-md">
+        <Button
+          className="bg-white px-8 py-6 text-lg hover:bg-gray-100 transition-all duration-200 shadow-md"
+          onClick={() => navigate("/lecturer/login")}
+        >
           I’m a Lecturer!
         </Button>
         <Button

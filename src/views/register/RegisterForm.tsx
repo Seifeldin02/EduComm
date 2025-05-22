@@ -67,6 +67,11 @@ export default function RegisterForm({ role }: RegisterFormProps) {
     resolver: zodResolver(createSchema(role)),
   });
 
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const universityValue = watch("university");
   const isUniversitySelected = !!universityValue;
 
@@ -81,12 +86,18 @@ export default function RegisterForm({ role }: RegisterFormProps) {
 
       if (usernameCheckRes.status === 409) {
         const error = await usernameCheckRes.json();
-        alert(error.message || "Username is taken");
+        setMessage({
+          type: "error",
+          text: error.message || "Username is taken",
+        });
         return;
       }
 
       if (usernameCheckRes.status !== 200 && usernameCheckRes.status !== 304) {
-        alert("Something went wrong checking the username");
+        setMessage({
+          type: "error",
+          text: "Something went wrong checking the username",
+        });
         return;
       }
 
@@ -114,13 +125,19 @@ export default function RegisterForm({ role }: RegisterFormProps) {
 
       if (!res.ok) {
         const error = await res.json();
-        alert(error.message || "Something went wrong");
+        setMessage({
+          type: "error",
+          text: error.message || "Something went wrong",
+        });
         return;
       }
 
-      alert("✅ Registered successfully!");
+      setMessage({
+        type: "success",
+        text: "✅ Registered successfully! Confirm your email to login.",
+      });
     } catch (err: any) {
-      alert(`❌ Error: ${err.message}`);
+      setMessage({ type: "error", text: `❌ Error: ${err.message}` });
       console.error(err);
     }
   };
@@ -135,9 +152,7 @@ export default function RegisterForm({ role }: RegisterFormProps) {
         <input
           {...register("name")}
           placeholder="Your Full Name"
-          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
-
-          }`}
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300`}
         />
         {errors.name && (
           <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
@@ -152,8 +167,7 @@ export default function RegisterForm({ role }: RegisterFormProps) {
         <input
           {...register("username")}
           placeholder="your_username"
-          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          }`}
+          className={`w-full px-8 py-3 border rounded-lg shadow-sm transition duration-150 bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300`}
         />
         {errors.username && (
           <p className="text-sm text-red-500 mt-1">{errors.username.message}</p>
@@ -170,7 +184,7 @@ export default function RegisterForm({ role }: RegisterFormProps) {
           className="w-full px-8 py-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-blue-300 focus:outline-none focus:ring-2"
         >
           <option value="">Select your university</option>
-          <option value="UTM">UTM</option>
+          <option value="UTM">Universiti Teknologi Malaysia (UTM)</option>
         </select>
         {errors.university && (
           <p className="text-sm text-red-500 mt-1">
@@ -241,7 +255,18 @@ export default function RegisterForm({ role }: RegisterFormProps) {
           </p>
         )}
       </div>
-
+      {/* Display Success or Error Message */}
+      {message && (
+        <div
+          className={`p-4 rounded-lg text-center ${
+            message.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
       {/* Submit Button */}
       <motion.div whileHover={{ scale: isUniversitySelected ? 1.03 : 1 }}>
         <Button
