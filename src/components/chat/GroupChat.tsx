@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { db } from '@/firebase/firebaseConfig'; // Assuming db is Realtime Database instance
+import { ref, push, onValue, off, serverTimestamp, query, orderByChild, limitToLast } from 'firebase/database';
 import { motion } from 'framer-motion';
 import { Send } from 'react-feather';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ interface Message {
   text: string;
   senderId: string;
   senderName: string;
-  timestamp: number;
+  timestamp: number; // Will store Firebase server timestamp
 }
 
 interface GroupChatProps {
@@ -20,152 +22,122 @@ interface GroupChatProps {
 }
 
 export default function GroupChat({ groupId, groupName }: GroupChatProps) {
+  const { user } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuthStore();
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const messagesContainerRef = useRef<null | HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!groupId || !user) return;
 
-    const fetchMessages = async () => {
-      try {
-        const token = await user.getIdToken();
-        const res = await fetch(`http://localhost:3000/api/groups/${groupId}/messages`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    const messagesRef = query(
+      ref(db, `groupMessages/${groupId}`),
+      orderByChild('timestamp'),
+      limitToLast(50) // Fetch last 50 messages initially
+    );
 
-        if (!res.ok) throw new Error('Failed to fetch messages');
-        const data = await res.json();
-        setMessages(data.messages || []);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        toast.error('Failed to load messages');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const callback = onValue(messagesRef, (snapshot) => {
+      const loadedMessages: Message[] = [];
+      snapshot.forEach((childSnapshot) => {
+        loadedMessages.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+      });
+      setMessages(loadedMessages);
+    });
 
-    // Set up real-time listener
-    const setupRealtimeListener = async () => {
-      try {
-        const token = await user.getIdToken();
-        const ws = new WebSocket(`ws://localhost:3000/ws/groups/${groupId}/messages`);
-        
-        ws.onopen = () => {
-          ws.send(JSON.stringify({ type: 'auth', token }));
-        };
-
-        ws.onmessage = (event) => {
-          const message = JSON.parse(event.data);
-          if (message.type === 'new_message') {
-            setMessages(prev => [...prev, message.data]);
-            scrollToBottom();
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          toast.error('Connection error. Please refresh the page.');
-        };
-
-        return () => {
-          ws.close();
-        };
-      } catch (error) {
-        console.error('Error setting up WebSocket:', error);
-        toast.error('Failed to establish real-time connection');
-      }
-    };
-
-    fetchMessages();
-    const cleanup = setupRealtimeListener();
-    return () => {
-      cleanup.then(cleanupFn => cleanupFn?.());
-    };
+    // Cleanup listener on component unmount
+    return () => off(messagesRef, 'value', callback);
   }, [groupId, user]);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change, but only if user is near the bottom
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 200; // If user is within 200px of the bottom
+      if (isNearBottom) {
+        scrollToBottom("auto");
+      }
+    }
+  }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || !groupId) return;
+
+    const messageData = {
+      text: newMessage,
+      senderId: user.uid,
+      senderName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+      timestamp: serverTimestamp(), // Firebase server timestamp
+    };
 
     try {
-      const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/groups/${groupId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: newMessage }),
-      });
-
-      if (!res.ok) throw new Error('Failed to send message');
+      const groupMessagesRef = ref(db, `groupMessages/${groupId}`);
+      await push(groupMessagesRef, messageData);
       setNewMessage('');
+      scrollToBottom(); // Scroll after sending a new message
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       toast.error('Failed to send message');
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full">Loading messages...</div>;
-  }
-
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-semibold">{groupName}</h2>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
+    <div className="flex flex-col h-full bg-gray-50">
+      <header className="bg-white p-4 border-b border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800">{groupName}</h2>
+      </header>
+
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+        {messages.map((msg) => (
           <motion.div
-            key={message.id}
-            initial={{ opacity: 0, y: 20 }}
+            key={msg.id}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
+            transition={{ duration: 0.2 }}
+            className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[70%] rounded-lg p-3 ${
-                message.senderId === user?.uid
+              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow ${
+                msg.senderId === user?.uid
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  : 'bg-white text-gray-800 border border-gray-200'
               }`}
             >
-              <div className="text-sm font-medium mb-1">
-                {message.senderName}
-              </div>
-              <div>{message.text}</div>
-              <div className="text-xs mt-1 opacity-70">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </div>
+              {msg.senderId !== user?.uid && (
+                <p className="text-xs font-semibold mb-1 ${msg.senderId === user?.uid ? 'text-blue-100' : 'text-gray-600'}">
+                  {msg.senderName}
+                </p>
+              )}
+              <p className="text-sm">{msg.text}</p>
+              <p className={`text-xs mt-1 ${msg.senderId === user?.uid ? 'text-blue-200' : 'text-gray-400'} text-right`}>
+                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
             </div>
           </motion.div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
-        <div className="flex gap-2">
+      <footer className="bg-white p-4 border-t border-gray-200">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           <Input
+            type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             className="flex-1"
+            autoComplete="off"
           />
-          <Button type="submit" disabled={!newMessage.trim()}>
-            <Send className="w-4 h-4" />
+          <Button type="submit" variant="default" size="icon" disabled={!newMessage.trim()}>
+            <Send className="w-5 h-5" />
           </Button>
-        </div>
-      </form>
+        </form>
+      </footer>
     </div>
   );
 } 
