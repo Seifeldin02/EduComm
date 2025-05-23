@@ -1,9 +1,35 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
 
 const LecturerRoute = ({ children }: { children: JSX.Element }) => {
   const { user, role, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    const verifyRole = async () => {
+      if (!user) return;
+
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("http://localhost:3000/api/users/verify-role", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ requiredRole: "Lecturer" }),
+        });
+
+        if (!res.ok) {
+          console.error("Role verification failed:", await res.json());
+        }
+      } catch (error) {
+        console.error("Error verifying role:", error);
+      }
+    };
+
+    verifyRole();
+  }, [user]);
 
   // Show nothing while loading
   if (isLoading) {

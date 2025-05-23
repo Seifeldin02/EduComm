@@ -5,25 +5,32 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/useAuthStore";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State for error messages
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      setErrorMessage(null); // Clear any previous error messages
+    if (!identifier.trim() || !password.trim()) {
+      toast.error("Please enter both username/email and password");
+      return;
+    }
 
+    setIsLoading(true);
+
+    try {
       // Get email from backend
       const res = await fetch(
-        `http://localhost:3000/api/users/get-email?identifier=${identifier}`
+        `http://localhost:3000/api/users/get-email?identifier=${encodeURIComponent(
+          identifier
+        )}`
       );
+
       if (!res.ok) {
-        const { message } = await res.json();
-        setErrorMessage(message || "User not found.");
-        return;
+        throw new Error("User not found");
       }
 
       const { email } = await res.json();
@@ -37,8 +44,7 @@ const LoginPage = () => {
 
       // Check if email is verified
       if (!userCredential.user.emailVerified) {
-        setErrorMessage("Please verify your email before logging in.");
-        return;
+        throw new Error("Please verify your email before logging in");
       }
 
       // Get ID token for backend role verification
@@ -58,17 +64,38 @@ const LoginPage = () => {
       );
 
       if (!verifyRes.ok) {
-        const { message } = await verifyRes.json();
-        setErrorMessage(message || "Role verification failed.");
-        return;
+        const data = await verifyRes.json();
+        // Sign out the user if role verification fails
+        await auth.signOut();
+        throw new Error(data.message || "Role verification failed");
       }
-      useAuthStore.getState().setUser(userCredential.user);
-      useAuthStore.getState().setRole("Student");
 
-      navigate("/dashboard/student"); // Example redirect
+      // Extract data from response
+      const { role } = await verifyRes.json();
+
+      // Double-check role matches
+      if (role.toLowerCase() !== "student") {
+        // Sign out the user if role doesn't match
+        await auth.signOut();
+        throw new Error("Invalid role for student login");
+      }
+
+      useAuthStore.getState().setUser(userCredential.user);
+      useAuthStore.getState().setRole(role);
+
+      toast.success("Login successful!");
+      navigate("/dashboard/student");
     } catch (err: any) {
-      console.error(err);
-      setErrorMessage(err.message || "An unexpected error occurred.");
+      console.error("Login error:", err);
+      toast.error(err.message || "Failed to login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleLogin();
     }
   };
 
@@ -106,18 +133,12 @@ const LoginPage = () => {
         className="flex flex-col gap-4 w-full max-w-sm"
       >
         <div className="bg-white p-6 rounded-lg shadow-md w-full">
-          {/* Error Message */}
-          {errorMessage && (
-            <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg">
-              {errorMessage}
-            </div>
-          )}
-
           <input
             placeholder="Username or Email"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300"
+            onKeyPress={handleKeyPress}
+            className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
 
           <input
@@ -125,14 +146,16 @@ const LoginPage = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300"
+            onKeyPress={handleKeyPress}
+            className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
 
           <Button
             onClick={handleLogin}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg"
+            disabled={isLoading}
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </div>
       </motion.div>

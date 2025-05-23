@@ -15,7 +15,7 @@ interface Group {
   }>;
 }
 
-export default function GroupChatPage() {
+export default function StudentGroupChatPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -26,7 +26,7 @@ export default function GroupChatPage() {
     const checkAccess = async () => {
       if (!user || !groupId) {
         setLoading(false);
-        navigate('/lecturer/groups');
+        navigate('/student/groups');
         return;
       }
 
@@ -55,7 +55,7 @@ export default function GroupChatPage() {
 
         if (!isMember) {
           toast.error('You do not have access to this group');
-          navigate('/lecturer/groups');
+          navigate('/student/groups');
           return;
         }
 
@@ -63,7 +63,7 @@ export default function GroupChatPage() {
       } catch (error: any) {
         console.error('Error checking group access:', error);
         toast.error(error.message || 'Failed to verify group access');
-        navigate('/lecturer/groups');
+        navigate('/student/groups');
       } finally {
         setLoading(false);
       }

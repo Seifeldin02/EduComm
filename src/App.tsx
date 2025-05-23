@@ -20,6 +20,7 @@ import DevAuthDebugger from "@/components/dev/DevAuthDebugger";
 import StudentGroupsPage from "@/views/student/GroupsPage";
 import LecturerGroupsPage from "@/views/lecturer/GroupsPage";
 import GroupChatPage from './views/lecturer/GroupChatPage';
+import StudentGroupChatPage from './views/student/GroupChatPage';
 import { Toaster } from 'sonner';
 
 function App() {
@@ -87,6 +88,7 @@ function App() {
                 <Routes>
                   <Route path="dashboard" element={<StudentDashboard />} />
                   <Route path="groups" element={<StudentGroupsPage />} />
+                  <Route path="group-chat/:groupId" element={<StudentGroupChatPage />} />
                 </Routes>
               </StudentRoute>
             }

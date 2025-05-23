@@ -10,7 +10,7 @@ export const useFirebaseAuthListener = () => {
   const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
-    setLoading(true); // Start loading when the effect runs
+    setLoading(true);
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user ?? null);
@@ -18,19 +18,23 @@ export const useFirebaseAuthListener = () => {
       if (user) {
         try {
           const token = await user.getIdToken();
+          
+          // Just get the user's role without requiring a specific role
           const res = await fetch("http://localhost:3000/api/users/verify-role", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
+            body: JSON.stringify({ requiredRole: null }),
           });
 
           if (res.ok) {
             const { role } = await res.json();
             setRole(role);
           } else {
-            console.error("Failed to get role:", await res.text());
+            const errorData = await res.json();
+            console.error("Failed to get role:", errorData);
             setRole(null);
           }
         } catch (error) {
@@ -42,12 +46,12 @@ export const useFirebaseAuthListener = () => {
       }
 
       setAuthReady(true);
-      setLoading(false); // Stop loading after everything is done
+      setLoading(false);
     });
 
     return () => {
       unsubscribe();
-      setLoading(false); // Clean up loading state on unmount
+      setLoading(false);
     };
   }, [setUser, setRole, setAuthReady, setLoading]);
 };

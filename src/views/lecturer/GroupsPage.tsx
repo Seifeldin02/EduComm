@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { Plus, Edit2, Trash2 } from "react-feather";
+import { Plus, Edit2, Trash2, MessageCircle } from "react-feather";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -272,21 +272,21 @@ export default function GroupsPage() {
       <Layout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Groups</h1>
+            <h1 className="text-2xl font-bold text-gray-800">My Groups</h1>
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Group
+                <Button className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Create Group</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Create New Group</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreateGroup} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Name</label>
+                <form onSubmit={handleCreateGroup} className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Name</label>
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -294,17 +294,16 @@ export default function GroupsPage() {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Description</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Enter group description"
-                      required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Image URL (optional)</label>
                     <Input
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
@@ -320,8 +319,12 @@ export default function GroupsPage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : groups.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              You haven't created any groups yet.
             </div>
           ) : (
             <motion.div
@@ -334,35 +337,43 @@ export default function GroupsPage() {
                 <motion.div
                   key={group.id}
                   variants={cardVariants}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleGroupClick(group.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
                 >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <GroupAvatar
-                          name={group.name}
-                          imageUrl={group.imageUrl}
-                          size="lg"
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold">{group.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            {group.members.length} members
-                          </p>
-                        </div>
+                  <div 
+                    className="relative h-48 bg-gray-100 flex items-center justify-center group"
+                    onClick={() => handleGroupClick(group.id)}
+                  >
+                    <GroupAvatar 
+                      name={group.name} 
+                      imageUrl={group.imageUrl} 
+                      size="xl" 
+                      className="w-32 h-32 transition-opacity group-hover:opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white rounded-full p-2 shadow-lg">
+                        <MessageCircle className="w-6 h-6 text-blue-500" />
                       </div>
-                      <div className="flex space-x-2">
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-800">{group.name}</h3>
+                      <div className="flex items-center space-x-2">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedGroup(group);
+                            setName(group.name);
+                            setDescription(group.description);
+                            setImageUrl(group.imageUrl || '');
                             setIsEditOpen(true);
                           }}
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-4 h-4 text-gray-500" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -372,75 +383,121 @@ export default function GroupsPage() {
                             handleDeleteGroup(group.id);
                           }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
                     </div>
-                    <p className="text-gray-600 line-clamp-2">{group.description}</p>
+                    <p className="text-gray-600 mt-1 line-clamp-2">{group.description}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-sm text-gray-500">
+                        {group.members.length} members
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedGroup(group);
+                          setNewMembers([]);
+                          setIsAddMembersOpen(true);
+                        }}
+                      >
+                        Add Members
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Members</h4>
+                    <div className="space-y-2">
+                      {group.members.slice(0, 3).map((member) => (
+                        <div
+                          key={member.uid}
+                          className="text-sm text-gray-600 flex items-center"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-2">
+                            {member.displayName[0].toUpperCase()}
+                          </div>
+                          <span>{member.displayName}</span>
+                          {member.uid === group.createdBy && (
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Lecturer</span>
+                          )}
+                        </div>
+                      ))}
+                      {group.members.length > 3 && (
+                        <div className="text-sm text-gray-500">
+                          +{group.members.length - 3} more members
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </motion.div>
           )}
-
-          {/* Edit Group Dialog */}
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Group</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleUpdateGroup} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter group name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter group description"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
-                  <Input
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Enter image URL"
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Update Group
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* Add Members Dialog */}
-          <Dialog open={isAddMembersOpen} onOpenChange={setIsAddMembersOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Members</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAddMembers} className="space-y-4">
-                <UserAutocomplete
-                  onSelect={(selectedUsers) => setNewMembers(selectedUsers)}
-                  selectedUsers={newMembers}
-                />
-                <Button type="submit" className="w-full">
-                  Add Members
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
+
+        {/* Edit Group Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Group</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateGroup} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter group name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter group description"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Image URL</label>
+                <Input
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Enter image URL"
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Save Changes
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Members Dialog */}
+        <Dialog open={isAddMembersOpen} onOpenChange={setIsAddMembersOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Members</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <UserAutocomplete
+                selectedUsers={newMembers}
+                onSelect={setNewMembers}
+                placeholder="Search users by email or username"
+              />
+              <Button
+                className="w-full"
+                onClick={handleAddMembers}
+                disabled={newMembers.length === 0}
+              >
+                Add Selected Members
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </Layout>
     </AnimationWrapper>
   );
