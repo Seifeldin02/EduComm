@@ -3,13 +3,20 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { db } from '@/firebase/firebaseConfig';
 import { ref, push, onValue, off, serverTimestamp, query, orderByChild, limitToLast } from 'firebase/database';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Info, Users, Edit2, ChevronRight, ChevronLeft } from 'react-feather';
+import { Send, Info, Users, Edit2, ChevronRight, ChevronLeft, Globe } from 'react-feather';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAutocomplete } from '@/components/user/UserAutocomplete';
 import { GroupAvatar } from '@/components/ui/GroupAvatar';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Message {
   id: string;
@@ -41,6 +48,19 @@ interface GroupChatProps {
   groupName: string;
 }
 
+interface TranslationLanguage {
+  code: string;
+  name: string;
+}
+
+const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
+  { code: "none", name: "No Translation" },
+  { code: "en", name: "English" },
+  { code: "zh", name: "Chinese (Simplified)" },
+  { code: "ms", name: "Malay" },
+  { code: "ar", name: "Arabic" }
+];
+
 export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const { user } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -54,6 +74,8 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const [editDescription, setEditDescription] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("none");
+  const [translatedMessages, setTranslatedMessages] = useState<{[key: string]: string}>({});
   
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const messagesContainerRef = useRef<null | HTMLDivElement>(null);
@@ -240,6 +262,100 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     }
   };
 
+  // Function to detect language
+  const detectLanguage = async (text: string): Promise<string> => {
+    try {
+      console.log('Detecting language for text:', text);
+      const response = await fetch('http://localhost:3000/api/translate/detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ q: text }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Language detection failed. Status:', response.status, 'Response:', errorText);
+        throw new Error(`Language detection failed: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Language detection response:', data);
+      return data[0].language;
+    } catch (error) {
+      console.error('Error detecting language:', error);
+      return 'en'; // Default to English if detection fails
+    }
+  };
+
+  // Function to translate text
+  const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+    try {
+      console.log('Translating text:', { text, sourceLang, targetLang });
+      const response = await fetch('http://localhost:3000/api/translate/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: text,
+          source: sourceLang,
+          target: targetLang,
+          format: "text"
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Translation failed. Status:', response.status, 'Response:', errorText);
+        throw new Error(`Translation failed: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Translation response:', data);
+      return data.translatedText;
+    } catch (error) {
+      console.error('Error translating text:', error);
+      return text; // Return original text if translation fails
+    }
+  };
+
+  // Effect to handle message translation
+  useEffect(() => {
+    if (selectedLanguage === 'none') {
+      setTranslatedMessages({});
+      return;
+    }
+
+    const translateMessages = async () => {
+      const newTranslations: {[key: string]: string} = {};
+      
+      for (const msg of messages) {
+        try {
+          // Always detect the source language for each message
+          const sourceLang = await detectLanguage(msg.text);
+          
+          // Only translate if the source language is different from target
+          if (sourceLang !== selectedLanguage) {
+            const translatedText = await translateText(msg.text, sourceLang, selectedLanguage);
+            // Only store translation if it's different from original
+            if (translatedText !== msg.text) {
+              newTranslations[msg.id] = translatedText;
+            }
+          }
+        } catch (error) {
+          console.error('Translation error for message:', msg.id, error);
+        }
+      }
+
+      // Replace all translations when language changes
+      setTranslatedMessages(newTranslations);
+    };
+
+    translateMessages();
+  }, [messages, selectedLanguage]); // Only depend on messages and selectedLanguage
+
   return (
     <div className="flex h-screen">
       {/* Main Chat Area */}
@@ -250,14 +366,31 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <GroupAvatar name={groupInfo?.name || groupName} imageUrl={groupInfo?.imageUrl} size="sm" />
             <h2 className="text-lg font-semibold text-gray-800">{groupInfo?.name || groupName}</h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            {showSidebar ? <ChevronRight className="h-5 w-5" /> : <Info className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-gray-50 rounded-md px-2 py-1">
+              <Globe className="w-4 h-4 text-gray-500" />
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-[140px] border-none bg-transparent">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSLATION_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              {showSidebar ? <ChevronRight className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       
         {/* Scrollable Messages Area */}
@@ -273,6 +406,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             ) : (
               messages.map((msg) => {
                 const isOwnMessage = msg.senderId === user?.uid;
+                const translatedText = translatedMessages[msg.id];
+                const showTranslation = selectedLanguage !== 'none' && translatedText && translatedText !== msg.text;
+
                 return (
                   <motion.div
                     key={msg.id}
@@ -295,6 +431,13 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                        {showTranslation && (
+                          <div className={`mt-2 pt-2 border-t ${isOwnMessage ? 'border-blue-400' : 'border-gray-200'}`}>
+                            <p className={`text-sm italic ${isOwnMessage ? 'text-blue-100' : 'text-gray-600'}`}>
+                              {translatedText}
+                            </p>
+                          </div>
+                        )}
                         <p className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-200' : 'text-gray-400'} text-right`}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
