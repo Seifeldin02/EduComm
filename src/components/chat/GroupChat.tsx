@@ -1,15 +1,37 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useAuthStore } from '@/store/useAuthStore';
-import { db } from '@/firebase/firebaseConfig';
-import { ref, push, onValue, off, serverTimestamp, query, orderByChild, limitToLast } from 'firebase/database';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Info, Users, Edit2, ChevronRight, ChevronLeft, Globe } from 'react-feather';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { UserAutocomplete } from '@/components/user/UserAutocomplete';
-import { GroupAvatar } from '@/components/ui/GroupAvatar';
-import { toast } from 'sonner';
+import React, { useEffect, useState, useRef } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
+import { db } from "@/firebase/firebaseConfig";
+import {
+  ref,
+  push,
+  onValue,
+  off,
+  serverTimestamp,
+  query,
+  orderByChild,
+  limitToLast,
+} from "firebase/database";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Send,
+  Info,
+  Users,
+  Edit2,
+  ChevronRight,
+  ChevronLeft,
+  Globe,
+} from "react-feather";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { UserAutocomplete } from "@/components/user/UserAutocomplete";
+import { GroupAvatar } from "@/components/ui/GroupAvatar";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -58,25 +80,27 @@ const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
   { code: "en", name: "English" },
   { code: "zh", name: "Chinese (Simplified)" },
   { code: "ms", name: "Malay" },
-  { code: "ar", name: "Arabic" }
+  { code: "ar", name: "Arabic" },
 ];
 
 export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const { user } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddMembersDialogOpen, setIsAddMembersDialogOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupInfo, setGroupInfo] = useState<Group | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("none");
-  const [translatedMessages, setTranslatedMessages] = useState<{[key: string]: string}>({});
-  
+  const [translatedMessages, setTranslatedMessages] = useState<{
+    [key: string]: string;
+  }>({});
+
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const messagesContainerRef = useRef<null | HTMLDivElement>(null);
 
@@ -91,19 +115,22 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     const fetchGroupInfo = async () => {
       try {
         const token = await user.getIdToken();
-        const response = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          `http://localhost:3000/api/groups/${groupId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.group) {
             setGroupInfo(data.group);
             setEditName(data.group.name);
-            setEditDescription(data.group.description || '');
-            setEditImageUrl(data.group.imageUrl || '');
+            setEditDescription(data.group.description || "");
+            setEditImageUrl(data.group.imageUrl || "");
           } else {
             throw new Error("Failed to load group data");
           }
@@ -112,7 +139,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
           toast.error(errorData.error || "Failed to access group");
         }
       } catch (error) {
-        console.error('Error fetching group info:', error);
+        console.error("Error fetching group info:", error);
         toast.error("Failed to load group data");
       }
     };
@@ -127,7 +154,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     setIsLoading(true);
     const messagesRef = query(
       ref(db, `groupMessages/${groupId}`),
-      orderByChild('timestamp'),
+      orderByChild("timestamp"),
       limitToLast(50)
     );
 
@@ -141,14 +168,15 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     });
 
     return () => {
-      off(messagesRef, 'value', callback);
+      off(messagesRef, "value", callback);
       setIsLoading(false);
     };
   }, [groupId, user, groupInfo]);
 
   useEffect(() => {
     if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const { scrollTop, scrollHeight, clientHeight } =
+        messagesContainerRef.current;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
       if (isNearBottom) {
         scrollToBottom("auto");
@@ -163,14 +191,14 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     const messageData = {
       text: newMessage,
       senderId: user.uid,
-      senderName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+      senderName: user.displayName || user.email?.split("@")[0] || "Anonymous",
       timestamp: serverTimestamp(),
     };
 
     try {
       const groupMessagesRef = ref(db, `groupMessages/${groupId}`);
       await push(groupMessagesRef, messageData);
-      setNewMessage('');
+      setNewMessage("");
       scrollToBottom();
     } catch (error) {
       console.error("Error sending message:", error);
@@ -183,18 +211,21 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: editName,
-          description: editDescription,
-          imageUrl: editImageUrl,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/groups/${groupId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: editName,
+            description: editDescription,
+            imageUrl: editImageUrl,
+          }),
+        }
+      );
 
       if (response.ok) {
         setGroupInfo({
@@ -204,32 +235,35 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
           imageUrl: editImageUrl,
         });
         setIsEditDialogOpen(false);
-        toast.success('Group updated successfully');
+        toast.success("Group updated successfully");
       } else {
-        throw new Error('Failed to update group');
+        throw new Error("Failed to update group");
       }
     } catch (error) {
-      console.error('Error updating group:', error);
-      toast.error('Failed to update group');
+      console.error("Error updating group:", error);
+      toast.error("Failed to update group");
     }
   };
 
   const handleAddMembers = async () => {
     if (!user || !groupInfo || selectedUsers.length === 0) {
-      toast.error('Please select users to add');
+      toast.error("Please select users to add");
       return;
     }
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`http://localhost:3000/api/groups/${groupId}/members`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ members: selectedUsers }),
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/groups/${groupId}/members`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ members: selectedUsers }),
+        }
+      );
 
       const data = await response.json();
 
@@ -237,115 +271,141 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
         if (data.addedMembers?.length > 0) {
           setGroupInfo({
             ...groupInfo,
-            members: [...groupInfo.members, ...data.addedMembers]
+            members: [...groupInfo.members, ...data.addedMembers],
           });
           setIsAddMembersDialogOpen(false);
           setSelectedUsers([]);
-          toast.success(`Added ${data.addedMembers.length} members successfully`);
-          
+          toast.success(
+            `Added ${data.addedMembers.length} members successfully`
+          );
+
           if (data.errors?.length > 0) {
             data.errors.forEach((error: string) => toast.warning(error));
           }
         } else {
-          toast.error(data.error || 'No members were added');
+          toast.error(data.error || "No members were added");
         }
       } else {
         if (data.errors?.length > 0) {
           data.errors.forEach((error: string) => toast.error(error));
         } else {
-          throw new Error(data.error || 'Failed to add members');
+          throw new Error(data.error || "Failed to add members");
         }
       }
     } catch (error: any) {
-      console.error('Error adding members:', error);
-      toast.error(error.message || 'Failed to add members');
+      console.error("Error adding members:", error);
+      toast.error(error.message || "Failed to add members");
     }
   };
 
   // Function to detect language
   const detectLanguage = async (text: string): Promise<string> => {
     try {
-      console.log('Detecting language for text:', text);
-      const response = await fetch('http://localhost:3000/api/translate/detect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ q: text }),
-      });
-      
+      console.log("Detecting language for text:", text);
+      const response = await fetch(
+        "http://localhost:3000/api/translate/detect",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ q: text }),
+        }
+      );
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Language detection failed. Status:', response.status, 'Response:', errorText);
+        console.error(
+          "Language detection failed. Status:",
+          response.status,
+          "Response:",
+          errorText
+        );
         throw new Error(`Language detection failed: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('Language detection response:', data);
+      console.log("Language detection response:", data);
       return data[0].language;
     } catch (error) {
-      console.error('Error detecting language:', error);
-      return 'en'; // Default to English if detection fails
+      console.error("Error detecting language:", error);
+      return "en"; // Default to English if detection fails
     }
   };
 
   // Function to translate text
-  const translateText = async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+  const translateText = async (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ): Promise<string> => {
     try {
-      console.log('Translating text:', { text, sourceLang, targetLang });
-      const response = await fetch('http://localhost:3000/api/translate/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: text,
-          source: sourceLang,
-          target: targetLang,
-          format: "text"
-        }),
-      });
-      
+      console.log("Translating text:", { text, sourceLang, targetLang });
+      const response = await fetch(
+        "http://localhost:3000/api/translate/translate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q: text,
+            source: sourceLang,
+            target: targetLang,
+            format: "text",
+          }),
+        }
+      );
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Translation failed. Status:', response.status, 'Response:', errorText);
+        console.error(
+          "Translation failed. Status:",
+          response.status,
+          "Response:",
+          errorText
+        );
         throw new Error(`Translation failed: ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('Translation response:', data);
+      console.log("Translation response:", data);
       return data.translatedText;
     } catch (error) {
-      console.error('Error translating text:', error);
+      console.error("Error translating text:", error);
       return text; // Return original text if translation fails
     }
   };
 
   // Effect to handle message translation
   useEffect(() => {
-    if (selectedLanguage === 'none') {
+    if (selectedLanguage === "none") {
       setTranslatedMessages({});
       return;
     }
 
     const translateMessages = async () => {
-      const newTranslations: {[key: string]: string} = {};
-      
+      const newTranslations: { [key: string]: string } = {};
+
       for (const msg of messages) {
         try {
           // Always detect the source language for each message
           const sourceLang = await detectLanguage(msg.text);
-          
+
           // Only translate if the source language is different from target
           if (sourceLang !== selectedLanguage) {
-            const translatedText = await translateText(msg.text, sourceLang, selectedLanguage);
+            const translatedText = await translateText(
+              msg.text,
+              sourceLang,
+              selectedLanguage
+            );
             // Only store translation if it's different from original
             if (translatedText !== msg.text) {
               newTranslations[msg.id] = translatedText;
             }
           }
         } catch (error) {
-          console.error('Translation error for message:', msg.id, error);
+          console.error("Translation error for message:", msg.id, error);
         }
       }
 
@@ -357,19 +417,32 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   }, [messages, selectedLanguage]); // Only depend on messages and selectedLanguage
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[82vh]">
       {/* Main Chat Area */}
-      <div className={`flex flex-col ${showSidebar ? 'w-[calc(100%-320px)]' : 'w-full'} transition-all duration-300`}>
+      <div
+        className={`flex flex-col ${
+          showSidebar ? "w-[calc(100%-320px)]" : "w-full"
+        } transition-all duration-300`}
+      >
         {/* Fixed Header */}
         <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center px-4 justify-between">
           <div className="flex items-center space-x-3">
-            <GroupAvatar name={groupInfo?.name || groupName} imageUrl={groupInfo?.imageUrl} size="sm" />
-            <h2 className="text-lg font-semibold text-gray-800">{groupInfo?.name || groupName}</h2>
+            <GroupAvatar
+              name={groupInfo?.name || groupName}
+              imageUrl={groupInfo?.imageUrl}
+              size="sm"
+            />
+            <h2 className="text-lg font-semibold text-gray-800">
+              {groupInfo?.name || groupName}
+            </h2>
           </div>
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2 bg-gray-50 rounded-md px-2 py-1">
               <Globe className="w-4 h-4 text-gray-500" />
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <Select
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+              >
                 <SelectTrigger className="w-[140px] border-none bg-transparent">
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -388,14 +461,18 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
               onClick={() => setShowSidebar(!showSidebar)}
               className="text-gray-500 hover:text-gray-700"
             >
-              {showSidebar ? <ChevronRight className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+              {showSidebar ? (
+                <ChevronRight className="h-5 w-5" />
+              ) : (
+                <Info className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
-      
+
         {/* Scrollable Messages Area */}
-        <div 
-          ref={messagesContainerRef} 
+        <div
+          ref={messagesContainerRef}
           className="flex-1 overflow-y-auto bg-gray-50 px-4"
         >
           <div className="py-4 space-y-4">
@@ -407,7 +484,10 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
               messages.map((msg) => {
                 const isOwnMessage = msg.senderId === user?.uid;
                 const translatedText = translatedMessages[msg.id];
-                const showTranslation = selectedLanguage !== 'none' && translatedText && translatedText !== msg.text;
+                const showTranslation =
+                  selectedLanguage !== "none" &&
+                  translatedText &&
+                  translatedText !== msg.text;
 
                 return (
                   <motion.div
@@ -415,7 +495,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${
+                      isOwnMessage ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div className={`max-w-xs lg:max-w-md space-y-1`}>
                       {!isOwnMessage && (
@@ -426,20 +508,39 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                       <div
                         className={`px-4 py-2 rounded-lg shadow ${
                           isOwnMessage
-                            ? 'bg-blue-500 text-white ml-12'
-                            : 'bg-white text-gray-800 mr-12'
+                            ? "bg-blue-500 text-white ml-12"
+                            : "bg-white text-gray-800 mr-12"
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                        <p className="text-sm whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
                         {showTranslation && (
-                          <div className={`mt-2 pt-2 border-t ${isOwnMessage ? 'border-blue-400' : 'border-gray-200'}`}>
-                            <p className={`text-sm italic ${isOwnMessage ? 'text-blue-100' : 'text-gray-600'}`}>
+                          <div
+                            className={`mt-2 pt-2 border-t ${
+                              isOwnMessage
+                                ? "border-blue-400"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            <p
+                              className={`text-sm italic ${
+                                isOwnMessage ? "text-blue-100" : "text-gray-600"
+                              }`}
+                            >
                               {translatedText}
                             </p>
                           </div>
                         )}
-                        <p className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-200' : 'text-gray-400'} text-right`}>
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <p
+                          className={`text-xs mt-1 ${
+                            isOwnMessage ? "text-blue-200" : "text-gray-400"
+                          } text-right`}
+                        >
+                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </div>
                     </div>
@@ -453,7 +554,10 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
         {/* Fixed Footer */}
         <div className="h-20 min-h-[80px] border-t border-gray-200 bg-white p-4">
-          <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+          <form
+            onSubmit={handleSendMessage}
+            className="flex items-center space-x-3"
+          >
             <Input
               type="text"
               value={newMessage}
@@ -462,7 +566,12 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
               className="flex-1"
               autoComplete="off"
             />
-            <Button type="submit" variant="default" size="icon" disabled={!newMessage.trim()}>
+            <Button
+              type="submit"
+              variant="default"
+              size="icon"
+              disabled={!newMessage.trim()}
+            >
               <Send className="w-5 h-5" />
             </Button>
           </form>
@@ -488,8 +597,12 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                   size="xl"
                 />
               </div>
-              <h3 className="text-xl font-semibold text-center mb-2">{groupInfo?.name}</h3>
-              <p className="text-gray-600 text-center text-sm">{groupInfo?.description}</p>
+              <h3 className="text-xl font-semibold text-center mb-2">
+                {groupInfo?.name}
+              </h3>
+              <p className="text-gray-600 text-center text-sm">
+                {groupInfo?.description}
+              </p>
               {groupInfo?.createdBy === user?.uid && (
                 <Button
                   variant="outline"
@@ -506,7 +619,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-700">Members ({groupInfo?.members.length})</h4>
+                  <h4 className="font-semibold text-gray-700">
+                    Members ({groupInfo?.members.length})
+                  </h4>
                   {groupInfo?.createdBy === user?.uid && (
                     <Button
                       variant="ghost"
@@ -520,17 +635,24 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                 </div>
                 <div className="space-y-3">
                   {groupInfo?.members.map((member) => (
-                    <div key={member.uid} className="flex items-center justify-between">
+                    <div
+                      key={member.uid}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                           {member.displayName?.[0]?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{member.displayName}</p>
-                          <p className="text-xs text-gray-500">{member.email}</p>
+                          <p className="text-sm font-medium">
+                            {member.displayName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {member.email}
+                          </p>
                         </div>
                       </div>
-                      {member.role === 'Lecturer' && (
+                      {member.role === "Lecturer" && (
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                           Lecturer
                         </span>
@@ -583,7 +705,10 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
       </Dialog>
 
       {/* Add Members Dialog */}
-      <Dialog open={isAddMembersDialogOpen} onOpenChange={setIsAddMembersDialogOpen}>
+      <Dialog
+        open={isAddMembersDialogOpen}
+        onOpenChange={setIsAddMembersDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Members</DialogTitle>
@@ -606,4 +731,4 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
       </Dialog>
     </div>
   );
-} 
+}

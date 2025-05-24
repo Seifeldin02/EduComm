@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
-import Layout from '@/components/layout/Layout';
-import GroupChat from '@/components/chat/GroupChat';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
+import Layout from "@/components/layout/Layout";
+import GroupChat from "@/components/chat/GroupChat";
+import { toast } from "sonner";
 
 interface Group {
   id: string;
@@ -26,44 +26,46 @@ export default function StudentGroupChatPage() {
     const checkAccess = async () => {
       if (!user || !groupId) {
         setLoading(false);
-        navigate('/student/groups');
+        navigate("/student/groups");
         return;
       }
 
       try {
         const token = await user.getIdToken();
         const res = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
 
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error || 'Failed to fetch group');
+          throw new Error(errorData.error || "Failed to fetch group");
         }
 
         const data = await res.json();
-        
+
         if (!data.success || !data.group) {
-          throw new Error('Invalid group data received');
+          throw new Error("Invalid group data received");
         }
 
-        const isMember = data.group.members.some((member: { uid: string }) => member.uid === user.uid);
+        const isMember = data.group.members.some(
+          (member: { uid: string }) => member.uid === user.uid
+        );
 
         if (!isMember) {
-          toast.error('You do not have access to this group');
-          navigate('/student/groups');
+          toast.error("You do not have access to this group");
+          navigate("/student/groups");
           return;
         }
 
         setGroup(data.group);
       } catch (error: any) {
-        console.error('Error checking group access:', error);
-        toast.error(error.message || 'Failed to verify group access');
-        navigate('/student/groups');
+        console.error("Error checking group access:", error);
+        toast.error(error.message || "Failed to verify group access");
+        navigate("/student/groups");
       } finally {
         setLoading(false);
       }
@@ -88,9 +90,9 @@ export default function StudentGroupChatPage() {
 
   return (
     <Layout>
-      <div className="h-[calc(100vh-4rem)]">
+      <div className="h-[calc(100dvh-theme(spacing.header)-theme(spacing.footer)-1px)] overflow-hidden">
         <GroupChat groupId={group.id} groupName={group.name} />
       </div>
     </Layout>
   );
-} 
+}
