@@ -12,10 +12,13 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.0.2",
+    "@types/cors": "^2.8.18",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "cors": "^2.8.5",
     "educomm": "file:",
     "firebase": "^10.8.0",
     "framer-motion": "^11.0.5",
