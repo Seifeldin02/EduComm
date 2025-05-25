@@ -42,7 +42,9 @@ export default function StudentGroupsPage() {
       const res = await fetch("http://localhost:3000/api/groups", {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
+        credentials: 'include'
       });
 
       if (!res.ok) {

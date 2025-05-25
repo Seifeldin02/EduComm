@@ -84,8 +84,10 @@ export default function GroupsPage() {
       const token = await user.getIdToken();
       const res = await fetch("http://localhost:3000/api/groups", {
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include'
       });
 
       if (!res.ok) {
@@ -110,18 +112,19 @@ export default function GroupsPage() {
     try {
       const token = await user.getIdToken();
       const res = await fetch("http://localhost:3000/api/groups", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-      },
+        },
+        credentials: 'include',
         body: JSON.stringify({ name, description, imageUrl }),
-    });
+      });
 
-    if (res.ok) {
+      if (res.ok) {
         toast.success("Group created successfully!");
         setIsCreateOpen(false);
-      setName("");
+        setName("");
         setDescription("");
         setImageUrl("");
         
@@ -149,9 +152,10 @@ export default function GroupsPage() {
       const res = await fetch(`http://localhost:3000/api/groups/${selectedGroup.id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ name, description, imageUrl }),
       });
 
@@ -176,8 +180,10 @@ export default function GroupsPage() {
       const res = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
         method: "DELETE",
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include'
       });
 
       if (res.ok) {
