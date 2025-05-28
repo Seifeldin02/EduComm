@@ -41,14 +41,16 @@ export default function StudentGroupsPage() {
       const token = await user.getIdToken();
       const res = await fetch("http://localhost:3000/api/groups", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include'
+        credentials: 'include',
+        mode: 'cors'
       });
 
       if (!res.ok) {
-        throw new Error('Failed to fetch groups');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch groups');
       }
 
       const data = await res.json();
