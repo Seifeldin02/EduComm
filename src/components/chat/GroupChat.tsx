@@ -1,64 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { db } from "@/firebase/firebaseConfig";
-import {
-  ref,
-  push,
-  onValue,
-  off,
-  serverTimestamp,
-  query,
-  orderByChild,
-  limitToLast,
-} from "firebase/database";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Send,
-  Info,
-  Users,
-  Edit2,
-  ChevronRight,
-  ChevronLeft,
-  Globe,
-  MoreVertical,
-  Trash2,
-  UserMinus,
-} from "react-feather";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { UserAutocomplete } from "@/components/user/UserAutocomplete";
-import { GroupAvatar } from "@/components/ui/GroupAvatar";
-import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Message } from "./Message";
 import { ChatSidebar } from "./ChatSidebar";
 import { EditGroupDialog } from "./dialogs/EditGroupDialog";
 import { AddMembersDialog } from "./dialogs/AddMembersDialog";
 import { RemoveMemberDialog } from "./dialogs/RemoveMemberDialog";
-import {
-  TRANSLATION_LANGUAGES,
-  detectLanguage,
-  translateText,
-} from "@/utils/translation";
-import { Group, Member, Message as MessageType } from "@/types/chat";
+import { Member } from "@/types/chat";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesArea } from "./MessagesArea";
 import { ChatInput } from "./ChatInput";
