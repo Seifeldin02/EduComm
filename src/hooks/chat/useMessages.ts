@@ -47,33 +47,47 @@ export const useMessages = (groupId: string, user: any | null) => {
             id,
             ...data,
           }))
+          // Filter out messages already processed by ID to prevent duplicates
           .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
-        // Update loaded message IDs
-        messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
-
         if (messagesList.length > 0) {
-          oldestMessageTimestampRef.current = messagesList[0].timestamp;
+          // Add new message IDs to the loaded set
+          messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+
           setMessages(prev => {
-            const newMessages = [...prev];
-            messagesList.forEach(msg => {
-              if (!newMessages.some(m => m.id === msg.id)) {
-                newMessages.push(msg);
-              }
-            });
-            return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+            // Create a map of existing messages for quick lookup
+            const prevMap = new Map(prev.map(m => [m.id, m]));
+            // Add new messages, replacing if ID exists, then sort
+            messagesList.forEach(msg => prevMap.set(msg.id, msg));
+            return Array.from(prevMap.values()).sort((a, b) => a.timestamp - b.timestamp);
           });
+
+          // Only update oldestMessageTimestampRef on the VERY FIRST load from this listener
+          if (!initialLoadDoneRef.current && messagesList.length > 0) {
+            oldestMessageTimestampRef.current = messagesList[0].timestamp;
+          }
+        }
+        // Determine hasMoreMessages based on whether the fetched chunk was full
+        // This should ideally be checked against the limitToLast value (MESSAGES_PER_PAGE)
+        // If onValue is for NEW messages, this check might be misleading.
+        // It's more reliable in loadMoreMessages. For initial load:
+        if (!initialLoadDoneRef.current) {
+            setHasMoreMessages(Object.keys(messagesData).length >= MESSAGES_PER_PAGE);
         }
 
-        setHasMoreMessages(messagesList.length >= MESSAGES_PER_PAGE);
       } else {
-        setMessages([]);
-        setHasMoreMessages(false);
+        // No messages initially, or all messages were deleted
+        if (!initialLoadDoneRef.current) { // Only clear if it's an initial load scenario
+            setMessages([]);
+            setHasMoreMessages(false);
+        }
       }
       
-      setIsLoading(false);
-      initialLoadDoneRef.current = true;
+      if (!initialLoadDoneRef.current) {
+        setIsLoading(false);
+        initialLoadDoneRef.current = true;
+      }
     };
 
     onValue(messagesQuery, handleNewMessages);
@@ -87,7 +101,7 @@ export const useMessages = (groupId: string, user: any | null) => {
 
   // Function to load older messages
   const loadMoreMessages = async () => {
-    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current) return;
+    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current || !initialLoadDoneRef.current) return;
 
     setIsLoadingMore(true);
 
@@ -115,10 +129,15 @@ export const useMessages = (groupId: string, user: any | null) => {
         messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
 
         if (messagesList.length > 0) {
+          // THIS IS THE CORRECT PLACE TO UPDATE oldestMessageTimestampRef for pagination
           oldestMessageTimestampRef.current = messagesList[0].timestamp;
+          
           setMessages(prev => {
-            const newMessages = [...messagesList, ...prev];
-            return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+            // Prevent duplicates when loading more
+            const existingIds = new Set(prev.map(m => m.id));
+            const uniqueNewMessages = messagesList.filter(m => !existingIds.has(m.id));
+            const combined = [...uniqueNewMessages, ...prev];
+            return combined.sort((a, b) => a.timestamp - b.timestamp);
           });
           setHasMoreMessages(messagesList.length >= MESSAGES_PER_PAGE);
         } else {
@@ -141,12 +160,14 @@ export const useMessages = (groupId: string, user: any | null) => {
     try {
       const messageData = {
         text: newMessage,
-        timestamp: Date.now(),
+        timestamp: Date.now(), // Consider serverTimestamp here for consistency if desired
         senderId: user.uid,
         senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
       };
 
       await push(messagesRef.current, messageData);
+      // After sending a message, new messages will be picked up by the onValue listener.
+      // We don't need to manually add to loadedMessageIdsRef or messages state here.
       return true;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -158,12 +179,18 @@ export const useMessages = (groupId: string, user: any | null) => {
     if (!user) return false;
 
     try {
-      const messageRef = ref(db, `groupMessages/${groupId}/${messageId}`);
-      await push(messageRef, null);
+      const messageRefToDelete = ref(db, `groupMessages/${groupId}/${messageId}`); // Corrected ref
+      await remove(messageRefToDelete); // Use remove() for Firebase RTDB
+      
+      // Remove from local state and loadedMessageIdsRef
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
       loadedMessageIdsRef.current.delete(messageId);
+      
+      toast.success("Message deleted");
       return true;
     } catch (error) {
       console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
       return false;
     }
   };

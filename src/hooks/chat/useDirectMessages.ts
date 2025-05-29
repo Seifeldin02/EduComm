@@ -32,12 +32,6 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
   useEffect(() => {
     if (!user) return;
 
-    const messagesQuery = query(
-      messagesRef.current,
-      orderByChild("timestamp"),
-      limitToLast(MESSAGES_PER_PAGE)
-    );
-
     const handleNewMessages = (snapshot: any) => {
       if (snapshot.exists()) {
         const messagesData = snapshot.val();
@@ -49,44 +43,64 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
           .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
-        // Update loaded message IDs
-        messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
-
         if (messagesList.length > 0) {
-          oldestMessageTimestampRef.current = messagesList[0].timestamp;
+          messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+
           setMessages(prev => {
-            const newMessages = [...prev];
-            messagesList.forEach(msg => {
-              if (!newMessages.some(m => m.id === msg.id)) {
-                newMessages.push(msg);
-              }
-            });
-            return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+            const prevMap = new Map(prev.map(m => [m.id, m]));
+            messagesList.forEach(msg => prevMap.set(msg.id, msg));
+            return Array.from(prevMap.values()).sort((a, b) => a.timestamp - b.timestamp);
           });
+
+          if (!initialLoadDoneRef.current && messagesList.length > 0) {
+            oldestMessageTimestampRef.current = messagesList[0].timestamp;
+          }
+        }
+        
+        if (!initialLoadDoneRef.current) {
+            setHasMoreMessages(Object.keys(messagesData).length >= MESSAGES_PER_PAGE);
         }
 
-        setHasMoreMessages(messagesList.length >= MESSAGES_PER_PAGE);
       } else {
-        setMessages([]);
-        setHasMoreMessages(false);
+        if (!initialLoadDoneRef.current) {
+            setMessages([]);
+            setHasMoreMessages(false);
+        }
       }
       
-      setIsLoading(false);
-      initialLoadDoneRef.current = true;
+      // Ensure isLoading is set to false and initialLoadDoneRef to true AFTER the first data handling
+      if (!initialLoadDoneRef.current) {
+        setIsLoading(false);
+        initialLoadDoneRef.current = true;
+      }
     };
+
+    // Reset state for new chatId
+    setIsLoading(true);
+    setMessages([]);
+    setHasMoreMessages(true);
+    loadedMessageIdsRef.current.clear();
+    oldestMessageTimestampRef.current = null;
+    initialLoadDoneRef.current = false; 
+    messagesRef.current = ref(db, `directMessages/${chatId}`); // Update messagesRef when chatId changes
+
+    const messagesQuery = query(
+      messagesRef.current, // Use the updated messagesRef
+      orderByChild("timestamp"),
+      limitToLast(MESSAGES_PER_PAGE)
+    );
 
     onValue(messagesQuery, handleNewMessages);
 
     return () => {
-      off(messagesQuery);
-      loadedMessageIdsRef.current.clear();
-      initialLoadDoneRef.current = false;
+      off(messagesQuery); // Detach listener from the specific query
+      // No need to clear loadedMessageIdsRef here as it's cleared when chatId changes
     };
-  }, [chatId, user]);
+  }, [chatId, user]); // chatID is a key dependency
 
   // Function to load older messages
   const loadMoreMessages = async () => {
-    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current) return;
+    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current || !initialLoadDoneRef.current) return;
 
     setIsLoadingMore(true);
 
@@ -116,8 +130,10 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
         if (messagesList.length > 0) {
           oldestMessageTimestampRef.current = messagesList[0].timestamp;
           setMessages(prev => {
-            const newMessages = [...messagesList, ...prev];
-            return newMessages.sort((a, b) => a.timestamp - b.timestamp);
+            const existingIds = new Set(prev.map(m => m.id));
+            const uniqueNewMessages = messagesList.filter(m => !existingIds.has(m.id));
+            const combined = [...uniqueNewMessages, ...prev];
+            return combined.sort((a, b) => a.timestamp - b.timestamp);
           });
           setHasMoreMessages(messagesList.length >= MESSAGES_PER_PAGE);
         } else {
@@ -135,20 +151,22 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
   };
 
   const sendMessage = async (newMessage: string): Promise<boolean> => {
-    if (!user) return false;
+    if (!user || !chatId) return false; // Ensure chatId is present
 
     try {
       const messageData = {
         text: newMessage,
-        timestamp: Date.now(),
+        timestamp: Date.now(), // Or serverTimestamp()
         senderId: user.uid,
         senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
       };
 
-      await push(messagesRef.current, messageData);
+      // Use the current messagesRef which is updated when chatId changes
+      await push(messagesRef.current, messageData); 
       return true;
     } catch (error) {
       console.error("Error sending message:", error);
+      toast.error("Failed to send message"); // Added toast
       return false;
     }
   };

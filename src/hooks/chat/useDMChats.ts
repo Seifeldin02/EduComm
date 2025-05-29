@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "@/firebase/firebaseConfig";
-import { ref, push, get, set, onValue, off } from "firebase/database";
+import { ref, push, get, set, onValue, off, serverTimestamp } from "firebase/database";
 
 interface DMChat {
   id: string;
@@ -92,14 +92,16 @@ export const useDMChats = (user: any | null) => {
         [user.uid]: {
           displayName: user.displayName || user.email?.split('@')[0] || 'Unknown User',
           email: user.email,
-          photoURL: user.photoURL,
+          photoURL: user.photoURL || null,
         },
         [otherUser.uid]: {
           displayName: otherUser.displayName,
           email: otherUser.email,
-          photoURL: otherUser.photoURL,
+          photoURL: otherUser.photoURL || null,
         },
       },
+      createdAt: serverTimestamp(),
+      lastMessage: null
     };
 
     // Save chat data

@@ -7,9 +7,17 @@ import { MessagesArea } from "./MessagesArea";
 import { ChatInput } from "./ChatInput";
 import { useTranslation } from "@/hooks/chat/useTranslation";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, X } from "react-feather";
+import { MessageCircle, X, Globe } from "react-feather";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TRANSLATION_LANGUAGES } from "@/utils/translation";
 
 export default function DirectMessages() {
   const { user } = useAuthStore();
@@ -115,17 +123,46 @@ export default function DirectMessages() {
         {selectedChatId ? (
           <>
             {/* Chat Header */}
-            <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center px-4">
+            <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4">
               {chats.find(c => c.id === selectedChatId) && (
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName[0]}
+                    {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.photoURL ? (
+                      <img
+                        src={getOtherParticipant(chats.find(c => c.id === selectedChatId))?.photoURL}
+                        alt={getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName}
+                        className="w-full h-full rounded-full"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-gray-600">
+                        {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName[0]}
+                      </span>
+                    )}
                   </div>
                   <h2 className="font-medium">
                     {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName}
                   </h2>
                 </div>
               )}
+              <div className="flex items-center space-x-2 bg-gray-50 rounded-md px-2 py-1">
+                <Globe className="w-4 h-4 text-gray-500" />
+                <Select
+                  value={selectedLanguage}
+                  onValueChange={setSelectedLanguage}
+                >
+                  <SelectTrigger className="w-[140px] border-none bg-transparent focus:ring-0">
+                    <SelectValue placeholder="Translate" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {TRANSLATION_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Messages Area */}

@@ -9,6 +9,7 @@ interface User {
   email: string;
   displayName: string;
   username: string;
+  photoURL?: string | null;
 }
 
 interface UserAutocompleteProps {
