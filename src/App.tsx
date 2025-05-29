@@ -21,6 +21,9 @@ import StudentGroupsPage from "@/views/student/GroupsPage";
 import LecturerGroupsPage from "@/views/lecturer/GroupsPage";
 import GroupChatPage from './views/lecturer/GroupChatPage';
 import StudentGroupChatPage from './views/student/GroupChatPage';
+import StudentMessagesPage from '@/views/student/MessagesPage';
+import LecturerMessagesPage from '@/views/lecturer/MessagesPage';
+import DirectMessages from '@/components/chat/DirectMessages';
 import { Toaster } from 'sonner';
 
 function App() {
@@ -89,6 +92,8 @@ function App() {
                   <Route path="dashboard" element={<StudentDashboard />} />
                   <Route path="groups" element={<StudentGroupsPage />} />
                   <Route path="group-chat/:groupId" element={<StudentGroupChatPage />} />
+                  <Route path="messages" element={<StudentMessagesPage />} />
+                  <Route path="chat/:chatId" element={<DirectMessages />} />
                 </Routes>
               </StudentRoute>
             }
@@ -103,6 +108,8 @@ function App() {
                   <Route path="dashboard" element={<LecturerDashboard />} />
                   <Route path="groups" element={<LecturerGroupsPage />} />
                   <Route path="group-chat/:groupId" element={<GroupChatPage />} />
+                  <Route path="messages" element={<LecturerMessagesPage />} />
+                  <Route path="chat/:chatId" element={<DirectMessages />} />
                 </Routes>
               </LecturerRoute>
             }

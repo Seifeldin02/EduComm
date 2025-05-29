@@ -30,8 +30,12 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const {
     messages,
     isLoading: messagesLoading,
+    isLoadingMore,
+    hasMoreMessages,
     sendMessage,
     deleteMessage,
+    loadMoreMessages,
+    initialLoadDone,
   } = useMessages(groupId, user);
   const { selectedLanguage, setSelectedLanguage, translatedMessages } =
     useTranslation(messages);
@@ -78,10 +82,14 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
         <MessagesArea
           messages={messages}
           isLoading={messagesLoading}
+          isLoadingMore={isLoadingMore}
+          hasMoreMessages={hasMoreMessages}
           currentUserId={user?.uid}
           isLecturer={isLecturer}
           translatedMessages={translatedMessages}
           onDeleteMessage={handleDeleteMessage}
+          onLoadMore={loadMoreMessages}
+          initialLoadDone={initialLoadDone}
         />
 
         <ChatInput onSendMessage={sendMessage} />

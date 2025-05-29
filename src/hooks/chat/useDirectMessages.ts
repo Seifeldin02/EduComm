@@ -9,7 +9,6 @@ import {
   query,
   orderByChild,
   limitToLast,
-  remove,
   get,
   startAt,
   endBefore,
@@ -19,13 +18,13 @@ import { toast } from "sonner";
 
 const MESSAGES_PER_PAGE = 10;
 
-export const useMessages = (groupId: string, user: any | null) => {
+export const useDirectMessages = (chatId: string, user: any | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const oldestMessageTimestampRef = useRef<number | null>(null);
-  const messagesRef = useRef(ref(db, `groupMessages/${groupId}`));
+  const messagesRef = useRef(ref(db, `directMessages/${chatId}`));
   const loadedMessageIdsRef = useRef(new Set<string>());
   const initialLoadDoneRef = useRef(false);
 
@@ -83,7 +82,7 @@ export const useMessages = (groupId: string, user: any | null) => {
       loadedMessageIdsRef.current.clear();
       initialLoadDoneRef.current = false;
     };
-  }, [groupId, user]);
+  }, [chatId, user]);
 
   // Function to load older messages
   const loadMoreMessages = async () => {
@@ -154,27 +153,12 @@ export const useMessages = (groupId: string, user: any | null) => {
     }
   };
 
-  const deleteMessage = async (messageId: string): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      const messageRef = ref(db, `groupMessages/${groupId}/${messageId}`);
-      await push(messageRef, null);
-      loadedMessageIdsRef.current.delete(messageId);
-      return true;
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      return false;
-    }
-  };
-
   return {
     messages,
     isLoading,
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
-    deleteMessage,
     loadMoreMessages,
     initialLoadDone: initialLoadDoneRef.current,
   };
