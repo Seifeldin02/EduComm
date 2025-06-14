@@ -9,7 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MessageProps } from "@/types/chat";
 
-export function Message({ message, isOwnMessage, translatedText, isLecturer, onDelete }: MessageProps) {
+export function Message({ message, isOwnMessage, translatedText, isLecturer, onDelete, currentUserId }: MessageProps) {
+  // Determine if user can delete this message
+  // In group chats: lecturer (group creator) can delete any message, or message sender can delete their own
+  // In direct messages: only message sender can delete their own message
+  const canDelete = isLecturer || (currentUserId && message.senderId === currentUserId);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -30,7 +35,7 @@ export function Message({ message, isOwnMessage, translatedText, isLecturer, onD
               : "bg-white text-gray-800"
           }`}
         >
-          {isLecturer && (
+          {canDelete && (
             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -56,7 +61,7 @@ export function Message({ message, isOwnMessage, translatedText, isLecturer, onD
               </DropdownMenu>
             </div>
           )}
-          <p className="text-sm whitespace-pre-wrap pr-6">{message.text}</p>
+          <p className={`text-sm whitespace-pre-wrap ${canDelete ? "pr-6" : ""}`}>{message.text}</p>
           {translatedText && translatedText !== message.text && (
             <div
               className={`mt-2 pt-2 border-t ${

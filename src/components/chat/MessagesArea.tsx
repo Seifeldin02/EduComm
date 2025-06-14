@@ -171,6 +171,7 @@ export function MessagesArea({
                       translatedText={translatedMessages[msg.id]}
                       isLecturer={isLecturer}
                       onDelete={onDeleteMessage}
+                      currentUserId={currentUserId}
                     />
                   ))}
                 </div>

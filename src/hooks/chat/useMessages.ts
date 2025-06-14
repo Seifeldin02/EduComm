@@ -9,7 +9,6 @@ import {
   query,
   orderByChild,
   limitToLast,
-  remove,
   get,
   startAt,
   endBefore,
@@ -179,18 +178,37 @@ export const useMessages = (groupId: string, user: any | null) => {
     if (!user) return false;
 
     try {
-      const messageRefToDelete = ref(db, `groupMessages/${groupId}/${messageId}`); // Corrected ref
-      await remove(messageRefToDelete); // Use remove() for Firebase RTDB
-      
-      // Remove from local state and loadedMessageIdsRef
+      // Optimistically remove from local state
+      const originalMessages = messages;
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
       loadedMessageIdsRef.current.delete(messageId);
-      
+
+      const token = await user.getIdToken();
+      const response = await fetch(
+        `http://localhost:3000/api/groups/${groupId}/messages/${messageId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        // Revert optimistic update on failure
+        setMessages(originalMessages);
+        loadedMessageIdsRef.current.add(messageId);
+        
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete message");
+      }
+
       toast.success("Message deleted");
       return true;
     } catch (error) {
       console.error("Error deleting message:", error);
-      toast.error("Failed to delete message");
+      toast.error(error instanceof Error ? error.message : "Failed to delete message");
       return false;
     }
   };

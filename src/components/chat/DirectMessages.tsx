@@ -32,6 +32,7 @@ export default function DirectMessages() {
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
+    deleteMessage,
     loadMoreMessages,
     initialLoadDone,
   } = useDirectMessages(selectedChatId || "", user);
@@ -49,6 +50,11 @@ export default function DirectMessages() {
       console.error("Error starting chat:", error);
       toast.error("Failed to start chat");
     }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user) return;
+    await deleteMessage(messageId);
   };
 
   const getOtherParticipant = (chat: any) => {
@@ -174,7 +180,7 @@ export default function DirectMessages() {
               currentUserId={user?.uid}
               isLecturer={false}
               translatedMessages={translatedMessages}
-              onDeleteMessage={() => {}}
+              onDeleteMessage={handleDeleteMessage}
               onLoadMore={loadMoreMessages}
               initialLoadDone={initialLoadDone}
             />

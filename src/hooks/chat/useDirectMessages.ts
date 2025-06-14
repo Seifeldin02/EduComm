@@ -171,12 +171,53 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     }
   };
 
+  const deleteMessage = async (messageId: string): Promise<boolean> => {
+    if (!user || !chatId) return false;
+
+    try {
+      // Optimistically remove from local state
+      const originalMessages = messages;
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      loadedMessageIdsRef.current.delete(messageId);
+
+      const token = await user.getIdToken();
+      const response = await fetch(
+        `http://localhost:3000/api/messages/${messageId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ chatId }),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert optimistic update on failure
+        setMessages(originalMessages);
+        loadedMessageIdsRef.current.add(messageId);
+        
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete message");
+      }
+
+      toast.success("Message deleted");
+      return true;
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete message");
+      return false;
+    }
+  };
+
   return {
     messages,
     isLoading,
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
+    deleteMessage,
     loadMoreMessages,
     initialLoadDone: initialLoadDoneRef.current,
   };

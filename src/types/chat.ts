@@ -39,6 +39,7 @@ export interface MessageProps {
   translatedText?: string;
   isLecturer: boolean;
   onDelete: (messageId: string) => void;
+  currentUserId?: string;
 }
 
 export interface SidebarProps {
