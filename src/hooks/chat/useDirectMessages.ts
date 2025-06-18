@@ -13,7 +13,7 @@ import {
   startAt,
   endBefore,
 } from "firebase/database";
-import { Message } from "@/types/chat";
+import { Message, FileAttachment } from "@/types/chat";
 import { toast } from "sonner";
 
 const MESSAGES_PER_PAGE = 10;
@@ -152,21 +152,79 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
 
   const sendMessage = async (newMessage: string): Promise<boolean> => {
     if (!user || !chatId) return false; // Ensure chatId is present
-
     try {
       const messageData = {
         text: newMessage,
-        timestamp: Date.now(), // Or serverTimestamp()
+        timestamp: Date.now(),
         senderId: user.uid,
         senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
+        type: "text" as const,
       };
-
-      // Use the current messagesRef which is updated when chatId changes
-      await push(messagesRef.current, messageData); 
+      const msgRef = await push(messagesRef.current, messageData);
+      // Notify backend for unread/notification logic
+      try {
+        const token = await user.getIdToken();
+        let lastMessagePreview = '';
+        if (messageData.type === 'text') {
+          lastMessagePreview = messageData.text;
+        } else if (messageData.type === 'image') {
+          lastMessagePreview = '[Image]';
+        } else if (messageData.type === 'file') {
+          lastMessagePreview = '[File]';
+        }
+        await fetch(`http://localhost:3000/api/chats/${chatId}/notify-message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
+        });
+      } catch (e) { /* ignore notify errors */ }
       return true;
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message"); // Added toast
+      toast.error("Failed to send message");
+      return false;
+    }
+  };
+
+  const sendFileMessage = async (file: FileAttachment): Promise<boolean> => {
+    if (!user || !chatId) return false;
+    try {
+      const messageData = {
+        text: "",
+        timestamp: Date.now(),
+        senderId: user.uid,
+        senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
+        type: file.isImage ? "image" : "file" as const,
+        fileAttachment: file,
+      };
+      const msgRef = await push(messagesRef.current, messageData);
+      // Notify backend for unread/notification logic
+      try {
+        const token = await user.getIdToken();
+        let lastMessagePreview = '';
+        if (messageData.type === 'text') {
+          lastMessagePreview = messageData.text;
+        } else if (messageData.type === 'image') {
+          lastMessagePreview = '[Image]';
+        } else if (messageData.type === 'file') {
+          lastMessagePreview = '[File]';
+        }
+        await fetch(`http://localhost:3000/api/chats/${chatId}/notify-message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
+        });
+      } catch (e) { /* ignore notify errors */ }
+      return true;
+    } catch (error) {
+      console.error("Error sending file message:", error);
+      toast.error("Failed to send file");
       return false;
     }
   };
@@ -217,6 +275,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
+    sendFileMessage,
     deleteMessage,
     loadMoreMessages,
     initialLoadDone: initialLoadDoneRef.current,

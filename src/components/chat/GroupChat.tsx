@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { ChatSidebar } from "./ChatSidebar";
 import { EditGroupDialog } from "./dialogs/EditGroupDialog";
@@ -11,6 +11,8 @@ import { ChatInput } from "./ChatInput";
 import { useMessages } from "@/hooks/chat/useMessages";
 import { useTranslation } from "@/hooks/chat/useTranslation";
 import { useGroupManagement } from "@/hooks/chat/useGroupManagement";
+import { firestore } from '@/firebase/firebaseConfig';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 interface GroupChatProps {
   groupId: string;
@@ -33,6 +35,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
+    sendFileMessage,
     deleteMessage,
     loadMoreMessages,
     initialLoadDone,
@@ -46,6 +49,35 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     addMembers,
     removeMember,
   } = useGroupManagement(groupId, user);
+
+  useEffect(() => {
+    const markGroupNotificationsAsRead = async () => {
+      if (!user || !groupId || messages.length === 0) return;
+      // Mark notifications as read in Firestore
+      const q = query(
+        collection(firestore, `notifications/${user.uid}/items`),
+        where('type', '==', 'group_message'),
+        where('groupId', '==', groupId),
+        where('read', '==', false)
+      );
+      const snapshot = await getDocs(q);
+      for (const notifDoc of snapshot.docs) {
+        await updateDoc(doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`), { read: true });
+      }
+      // Update lastRead in backend
+      try {
+        const token = await user.getIdToken();
+        await fetch(`http://localhost:3000/api/groups/${groupId}/read`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (e) { /* ignore errors */ }
+    };
+    markGroupNotificationsAsRead();
+  }, [groupId, user, messages.length]);
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!user) return;
@@ -92,7 +124,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
           initialLoadDone={initialLoadDone}
         />
 
-        <ChatInput onSendMessage={sendMessage} />
+        <ChatInput onSendMessage={sendMessage} onSendFile={sendFileMessage} />
       </div>
 
       {/* Sidebar */}

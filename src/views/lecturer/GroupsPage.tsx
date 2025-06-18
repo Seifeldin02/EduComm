@@ -271,6 +271,13 @@ export default function GroupsPage() {
     }
   };
 
+  const handleMemberSelect = (selectedUser: any) => {
+    // Add the selected user's email to the newMembers array if not already present
+    if (!newMembers.includes(selectedUser.email)) {
+      setNewMembers(prev => [...prev, selectedUser.email]);
+    }
+  };
+
   const handleGroupClick = (groupId: string) => {
     navigate(`/lecturer/group-chat/${groupId}`);
   };
@@ -492,16 +499,38 @@ export default function GroupsPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <UserAutocomplete
-                selectedUsers={newMembers}
-                onSelect={setNewMembers}
+                onSelect={handleMemberSelect}
                 placeholder="Search users by email or username"
               />
+              
+              {/* Show selected members */}
+              {newMembers.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Selected Members:</label>
+                  <div className="space-y-1">
+                    {newMembers.map((email, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm">{email}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setNewMembers(prev => prev.filter((_, i) => i !== index))}
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <Button
                 className="w-full"
                 onClick={handleAddMembers}
                 disabled={newMembers.length === 0}
               >
-                Add Selected Members
+                Add {newMembers.length} Member{newMembers.length !== 1 ? 's' : ''}
               </Button>
             </div>
           </DialogContent>

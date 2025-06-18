@@ -23,8 +23,10 @@ const app = initializeApp(firebaseConfig);
 
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
+import { getFirestore } from "firebase/firestore";
 
 const auth = getAuth(app);
 const db = getDatabase(app); // Realtime Database instance
+const firestore = getFirestore(app); // Firestore instance
 
-export { app, auth, db }; // Export auth and db as named exports
+export { app, auth, db, firestore }; // Export auth, db (Realtime), and firestore (Firestore)

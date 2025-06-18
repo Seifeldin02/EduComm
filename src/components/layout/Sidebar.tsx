@@ -66,12 +66,11 @@ const Sidebar = () => {
 
   const navigationItems = [
     { to: `${basePath}/dashboard`, icon: BarChart2, label: "Dashboard" },
-    { to: `${basePath}/courses`, icon: BookOpen, label: "My Courses" },
-    { to: `${basePath}/calendar`, icon: Calendar, label: "Schedule" },
-    { to: `${basePath}/assignments`, icon: FileText, label: "Assignments" },
+    { to: `${basePath}/courses`, icon: BookOpen, label: "Courses" },
     { to: `${basePath}/groups`, icon: Users, label: "Study Groups" },
     { to: `${basePath}/messages`, icon: MessageCircle, label: "Messages" },
-    { to: `${basePath}/certificates`, icon: Award, label: "Certificates" },
+    { to: `${basePath}/assignments`, icon: FileText, label: "Assignments" },
+    { to: `${basePath}/report-activity`, icon: BarChart2, label: "Report Activity" },
   ];
 
   return (

@@ -1,9 +1,23 @@
+export interface FileAttachment {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
+  isImage: boolean;
+  url: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 export interface Message {
   id: string;
   text: string;
   senderId: string;
   senderName: string;
   timestamp: number;
+  type?: 'text' | 'file' | 'image';
+  fileAttachment?: FileAttachment;
 }
 
 export interface Member {

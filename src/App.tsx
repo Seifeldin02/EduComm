@@ -24,7 +24,19 @@ import StudentGroupChatPage from './views/student/GroupChatPage';
 import StudentMessagesPage from '@/views/student/MessagesPage';
 import LecturerMessagesPage from '@/views/lecturer/MessagesPage';
 import DirectMessages from '@/components/chat/DirectMessages';
+import StudentCoursesPage from '@/views/student/CoursesPage';
+import StudentAssignmentsPage from '@/views/student/AssignmentsPage';
+import LecturerCoursesPage from '@/views/lecturer/CoursesPage';
+import CourseDetailPage from '@/components/course/CourseDetailPage';
 import { Toaster } from 'sonner';
+import CourseMaterialsPage from '@/components/course/CourseMaterialsPage';
+import CourseAssignmentsPage from '@/components/course/CourseAssignmentsPage';
+import StudentAssignmentDetailPage from '@/views/student/StudentAssignmentDetailPage';
+import LecturerAssignmentSubmissionsPage from '@/views/lecturer/LecturerAssignmentSubmissionsPage';
+import CourseTopicsPage from '@/views/forum/CourseTopicsPage';
+import TopicDetailPage from '@/views/forum/TopicDetailPage';
+import StudentReportActivityPage from '@/views/student/ReportActivityPage';
+import LecturerReportActivityPage from '@/views/lecturer/ReportActivityPage';
 
 function App() {
   useFirebaseAuthListener();
@@ -90,10 +102,18 @@ function App() {
               <StudentRoute>
                 <Routes>
                   <Route path="dashboard" element={<StudentDashboard />} />
+                  <Route path="courses" element={<StudentCoursesPage />} />
+                  <Route path="courses/:courseId" element={<CourseDetailPage userRole="student" />} />
+                  <Route path="courses/:courseId/materials" element={<CourseMaterialsPage userRole="student" />} />
+                  <Route path="assignments" element={<StudentAssignmentsPage />} />
+                  <Route path="assignments/:assignmentId" element={<StudentAssignmentDetailPage />} />
                   <Route path="groups" element={<StudentGroupsPage />} />
                   <Route path="group-chat/:groupId" element={<StudentGroupChatPage />} />
                   <Route path="messages" element={<StudentMessagesPage />} />
                   <Route path="chat/:chatId" element={<DirectMessages />} />
+                  <Route path="courses/:courseId/topics" element={<CourseTopicsPage userRole="student" />} />
+                  <Route path="courses/:courseId/topics/:topicId" element={<TopicDetailPage userRole="student" />} />
+                  <Route path="report-activity" element={<StudentReportActivityPage />} />
                 </Routes>
               </StudentRoute>
             }
@@ -106,10 +126,18 @@ function App() {
               <LecturerRoute>
                 <Routes>
                   <Route path="dashboard" element={<LecturerDashboard />} />
+                  <Route path="courses" element={<LecturerCoursesPage />} />
+                  <Route path="courses/:courseId" element={<CourseDetailPage userRole="lecturer" />} />
+                  <Route path="courses/:courseId/materials" element={<CourseMaterialsPage userRole="lecturer" />} />
+                  <Route path="courses/:courseId/assignments" element={<CourseAssignmentsPage userRole="lecturer" />} />
+                  <Route path="courses/:courseId/assignments/:assignmentId/submissions" element={<LecturerAssignmentSubmissionsPage />} />
                   <Route path="groups" element={<LecturerGroupsPage />} />
                   <Route path="group-chat/:groupId" element={<GroupChatPage />} />
                   <Route path="messages" element={<LecturerMessagesPage />} />
                   <Route path="chat/:chatId" element={<DirectMessages />} />
+                  <Route path="courses/:courseId/topics" element={<CourseTopicsPage userRole="lecturer" />} />
+                  <Route path="courses/:courseId/topics/:topicId" element={<TopicDetailPage userRole="lecturer" />} />
+                  <Route path="report-activity" element={<LecturerReportActivityPage />} />
                 </Routes>
               </LecturerRoute>
             }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useDMChats } from "@/hooks/chat/useDMChats";
 import { useDirectMessages } from "@/hooks/chat/useDirectMessages";
@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TRANSLATION_LANGUAGES } from "@/utils/translation";
+import { firestore } from '@/firebase/firebaseConfig';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 export default function DirectMessages() {
   const { user } = useAuthStore();
@@ -32,12 +34,42 @@ export default function DirectMessages() {
     isLoadingMore,
     hasMoreMessages,
     sendMessage,
+    sendFileMessage,
     deleteMessage,
     loadMoreMessages,
     initialLoadDone,
   } = useDirectMessages(selectedChatId || "", user);
 
   const { selectedLanguage, setSelectedLanguage, translatedMessages } = useTranslation(messages);
+
+  useEffect(() => {
+    const markDMNotificationsAsRead = async () => {
+      if (!user || !selectedChatId || messages.length === 0) return;
+      // Mark notifications as read in Firestore
+      const q = query(
+        collection(firestore, `notifications/${user.uid}/items`),
+        where('type', '==', 'direct_message'),
+        where('chatId', '==', selectedChatId),
+        where('read', '==', false)
+      );
+      const snapshot = await getDocs(q);
+      for (const notifDoc of snapshot.docs) {
+        await updateDoc(doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`), { read: true });
+      }
+      // Update lastRead in backend
+      try {
+        const token = await user.getIdToken();
+        await fetch(`http://localhost:3000/api/chats/${selectedChatId}/read`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (e) { /* ignore errors */ }
+    };
+    markDMNotificationsAsRead();
+  }, [selectedChatId, user, messages.length]);
 
   const handleStartChat = async (selectedUser: any) => {
     try {
@@ -186,7 +218,7 @@ export default function DirectMessages() {
             />
 
             {/* Chat Input */}
-            <ChatInput onSendMessage={sendMessage} />
+            <ChatInput onSendMessage={sendMessage} onSendFile={sendFileMessage} />
           </>
         ) : showNewChat ? (
           <AnimationWrapper>
