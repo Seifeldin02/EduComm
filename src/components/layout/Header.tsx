@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
-import { Bell, Search, MessageCircle } from "react-feather";
+import { Bell, Search, User, LogOut, Settings } from "react-feather";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useState } from 'react';
 import { firestore } from '@/firebase/firebaseConfig';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useNavigate, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/firebase/auth';
 
 // Notification type for better type safety
 interface NotificationItem {
@@ -24,12 +26,14 @@ interface NotificationItem {
   read?: boolean;
   courseId?: string;
   topicId?: string;
+  [key: string]: any; // Add index signature for dynamic key access
 }
 
 const Header = () => {
-  const { user } = useAuthStore();
+  const { user, role } = useAuthStore();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,8 +57,37 @@ const Header = () => {
     } catch {}
   };
 
-  // Group notifications
-  const messageNotifs = notifications.filter(n => (n.type === 'group_message' || n.type === 'direct_message'));
+  // Group notifications by groupId (group_message) and chatId (direct_message)
+  function groupByKey(notifs: NotificationItem[], key: string) {
+    const map = new Map<string, NotificationItem & { count: number }>();
+    for (const notif of notifs) {
+      const groupKey = notif[key];
+      if (!groupKey) continue;
+      if (!map.has(groupKey)) {
+        map.set(groupKey, { ...notif, count: notif.count || 1 });
+      } else {
+        // Update count and keep the latest notification
+        const existing = map.get(groupKey)!;
+        if ((notif.timestamp || 0) > (existing.timestamp || 0)) {
+          map.set(groupKey, { ...notif, count: (notif.count || 1) + (existing.count || 1) });
+        } else {
+          map.set(groupKey, { ...existing, count: (existing.count || 1) + (notif.count || 1) });
+        }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  // Grouped notifications for messages
+  const groupMessageNotifs = groupByKey(
+    notifications.filter(n => n.type === 'group_message'),
+    'groupId'
+  );
+  const directMessageNotifs = groupByKey(
+    notifications.filter(n => n.type === 'direct_message'),
+    'chatId'
+  );
+  const messageNotifs = [...groupMessageNotifs, ...directMessageNotifs].sort((a, b) => b.timestamp - a.timestamp);
   const courseNotifs = notifications.filter(n => n.type === 'new_assignment' || n.type === 'new_topic');
 
   // Helper: get avatar and name
@@ -78,14 +111,33 @@ const Header = () => {
   const handleNotifClick = (notif: NotificationItem) => {
     markAsRead(notif.id);
     if (notif.type === 'group_message' && notif.groupId) {
-      navigate(`/student/group-chat/${notif.groupId}`);
+      const base = role === 'Lecturer' ? '/lecturer' : '/student';
+      navigate(`${base}/group-chat/${notif.groupId}`);
     } else if (notif.type === 'direct_message' && notif.chatId) {
-      navigate(`/student/chat/${notif.chatId}`);
+      const base = role === 'Lecturer' ? '/lecturer' : '/student';
+      navigate(`${base}/chat/${notif.chatId}`);
     } else if (notif.type === 'new_assignment' && notif.courseId) {
       navigate(`/student/assignments?course=${notif.courseId}`);
     } else if (notif.type === 'new_topic' && notif.courseId && notif.topicId) {
       navigate(`/student/courses/${notif.courseId}/topics/${notif.topicId}`);
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const closeDropdown = () => {
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -99,14 +151,14 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <div className="flex items-center space-x-4">
-            <img
-              src="/EduCommLogo.png"
-              alt="EduComm Logo"
-              className="w-8 h-8 object-contain"
-            />
-            <h1 className="text-xl font-bold text-gray-800 tracking-wide hidden md:block">
-              EduComm
-            </h1>
+            <Link to={role === 'Lecturer' ? '/lecturer/dashboard' : '/student/dashboard'} className="flex-shrink-0 flex items-center">
+              <img
+                src="/EduCommLogo.png"
+                alt="EduComm Logo"
+                className="h-8 w-auto"
+              />
+              <span className="ml-2 text-lg font-semibold text-blue-600">EduComm</span>
+            </Link>
           </div>
 
           {/* Search Bar */}
@@ -157,7 +209,7 @@ const Header = () => {
                           <span className="font-medium truncate">
                             {notif.type === 'group_message' ? notif.groupName || notif.groupId : 'Direct Message'}
                           </span>
-                          {notif.count && notif.count > 1 && (
+                          {(!notif.read && notif.count && notif.count > 1) && (
                             <Badge variant="default" className="ml-1">{notif.count}</Badge>
                           )}
                         </div>
@@ -207,11 +259,65 @@ const Header = () => {
                 <p className="text-sm font-medium text-gray-900">{user?.displayName}</p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
-              <img
-                src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || 'User'}&background=random`}
-                alt="Profile"
-                className="h-8 w-8 rounded-full border-2 border-gray-200"
-              />
+              <div className="ml-3 relative">
+                <div>
+                  <button
+                    type="button"
+                    className="flex items-center max-w-xs text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    id="user-menu"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                    onClick={toggleDropdown}
+                  >
+                    <span className="sr-only">Open user menu</span>
+                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                      {user?.displayName?.[0]?.toUpperCase() || <User className="h-5 w-5" />}
+                    </div>
+                  </button>
+                </div>
+
+                {isDropdownOpen && (
+                  <>
+                    {/* Backdrop to close dropdown when clicking outside */}
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={closeDropdown}
+                      aria-hidden="true"
+                    ></div>
+                    
+                    <div
+                      className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="user-menu"
+                    >
+                      <div className="py-1 border-b border-gray-100">
+                        <div className="block px-4 py-2 text-sm text-gray-900">
+                          <div className="font-medium">{user?.displayName}</div>
+                          <div className="text-gray-500 truncate">{user?.email}</div>
+                        </div>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                          onClick={closeDropdown}
+                        >
+                          <Settings className="mr-2 h-4 w-4" /> Profile Settings
+                        </Link>
+                        <button
+                          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" /> Sign out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

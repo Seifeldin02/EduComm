@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, 
-  Calendar, 
-  Users, 
-  Award, 
-  MessageCircle, 
-  Settings, 
+import {
+  BookOpen,
+  Users,
+  MessageCircle,
+  Settings,
   HelpCircle,
   ChevronLeft,
   FileText,
-  BarChart2
+  BarChart2,
 } from "react-feather";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -31,13 +29,17 @@ interface NavItemProps {
   expanded: boolean;
 }
 
-const NavItem = ({ to, icon: Icon, label, isActive, expanded }: NavItemProps) => (
+const NavItem = ({
+  to,
+  icon: Icon,
+  label,
+  isActive,
+  expanded,
+}: NavItemProps) => (
   <Link
     to={to}
     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-      isActive
-        ? "bg-blue-50 text-blue-600"
-        : "text-gray-600 hover:bg-gray-100"
+      isActive ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
     }`}
   >
     <Icon size={20} />
@@ -70,7 +72,11 @@ const Sidebar = () => {
     { to: `${basePath}/groups`, icon: Users, label: "Study Groups" },
     { to: `${basePath}/messages`, icon: MessageCircle, label: "Messages" },
     { to: `${basePath}/assignments`, icon: FileText, label: "Assignments" },
-    { to: `${basePath}/report-activity`, icon: BarChart2, label: "Report Activity" },
+    {
+      to: `${basePath}/report-activity`,
+      icon: BarChart2,
+      label: "Report Activity",
+    },
   ];
 
   return (

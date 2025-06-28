@@ -3,19 +3,24 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { 
-  FileText, 
-  Plus, 
-  Download, 
-  Edit2, 
-  Trash2, 
-  Eye,
+import {
+  FileText,
+  Plus,
+  Download,
+  Edit2,
+  Trash2,
   ArrowLeft,
   File,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from "react-feather";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -28,13 +33,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileUpload } from '@/components/chat/FileUpload';
+import { FileUpload } from "@/components/chat/FileUpload";
 
 interface CourseMaterialsPageProps {
-  userRole: 'student' | 'lecturer';
+  userRole: "student" | "lecturer";
 }
 
-export default function CourseMaterialsPage({ userRole }: CourseMaterialsPageProps) {
+export default function CourseMaterialsPage({
+  userRole,
+}: CourseMaterialsPageProps) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -43,7 +50,8 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<CourseMaterial | null>(null);
+  const [selectedMaterial, setSelectedMaterial] =
+    useState<CourseMaterial | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -60,13 +68,13 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
 
   const fetchCourseInfo = async () => {
     if (!user || !courseId) return;
-    
+
     try {
       const token = await user.getIdToken();
       const res = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -75,31 +83,34 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
         setCourseName(data.course.name);
       }
     } catch (error) {
-      console.error('Error fetching course info:', error);
+      console.error("Error fetching course info:", error);
     }
   };
 
   const fetchMaterials = async () => {
     if (!user || !courseId) return;
-    
+
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}/materials`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/courses/${courseId}/materials`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (res.ok) {
         const data = await res.json();
         setMaterials(data.materials || []);
       } else {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch materials');
+        throw new Error(errorData.error || "Failed to fetch materials");
       }
     } catch (error) {
-      console.error('Error fetching materials:', error);
+      console.error("Error fetching materials:", error);
       toast.error("Failed to fetch materials");
     } finally {
       setLoading(false);
@@ -114,14 +125,17 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
       const token = await user.getIdToken();
       const body: any = { title, description, isVisible };
       if (file) body.fileAttachment = file;
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}/materials`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/courses/${courseId}/materials`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
 
       if (res.ok) {
         toast.success("Material created successfully!");
@@ -133,11 +147,13 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
         fetchMaterials();
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to create material');
+        throw new Error(data.error || "Failed to create material");
       }
     } catch (error) {
-      console.error('Error creating material:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to create material");
+      console.error("Error creating material:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create material"
+      );
     }
   };
 
@@ -147,21 +163,24 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
 
     try {
       const token = await user.getIdToken();
-      const body: any = { 
+      const body: any = {
         materialId: selectedMaterial.id,
-        title, 
-        description, 
-        isVisible 
+        title,
+        description,
+        isVisible,
       };
       if (file) body.fileAttachment = file;
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}/materials`, {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/courses/${courseId}/materials`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
 
       if (res.ok) {
         toast.success("Material updated successfully!");
@@ -170,11 +189,13 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
         fetchMaterials();
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to update material');
+        throw new Error(data.error || "Failed to update material");
       }
     } catch (error) {
-      console.error('Error updating material:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to update material");
+      console.error("Error updating material:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update material"
+      );
     }
   };
 
@@ -183,14 +204,17 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
 
     try {
       const token = await user?.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}/materials`, {
-        method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ materialId }),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/courses/${courseId}/materials`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ materialId }),
+        }
+      );
 
       if (res.ok) {
         toast.success("Material deleted successfully!");
@@ -209,7 +233,7 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
       const response = await fetch(`http://localhost:3000${url}`);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
@@ -217,23 +241,24 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error('Download failed:', error);
-      toast.error('Failed to download file');
+      console.error("Download failed:", error);
+      toast.error("Failed to download file");
     }
   };
 
   const getFileIcon = (mimetype: string, isImage: boolean) => {
     if (isImage) return <ImageIcon className="w-4 h-4 text-blue-500" />;
-    if (mimetype?.includes('pdf')) return <FileText className="w-4 h-4 text-red-500" />;
+    if (mimetype?.includes("pdf"))
+      return <FileText className="w-4 h-4 text-red-500" />;
     return <File className="w-4 h-4 text-gray-500" />;
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (loading) {
@@ -264,12 +289,14 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                 Back to Course
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Course Materials</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Course Materials
+                </h1>
                 <p className="text-gray-600">{courseName}</p>
               </div>
             </div>
-            
-            {userRole === 'lecturer' && (
+
+            {userRole === "lecturer" && (
               <Button
                 onClick={() => setIsCreateOpen(true)}
                 className="flex items-center gap-2"
@@ -284,12 +311,13 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
           {materials.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No materials yet</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No materials yet
+              </h3>
               <p className="text-gray-500">
-                {userRole === 'lecturer' 
-                  ? 'Start by adding some course materials for your students.'
-                  : 'No materials have been uploaded for this course yet.'
-                }
+                {userRole === "lecturer"
+                  ? "Start by adding some course materials for your students."
+                  : "No materials have been uploaded for this course yet."}
               </p>
             </div>
           ) : (
@@ -310,16 +338,22 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                             {material.title}
                           </CardTitle>
                           <div className="flex items-center gap-2 mt-2">
-                            <Badge variant={material.isVisible ? "default" : "secondary"}>
+                            <Badge
+                              variant={
+                                material.isVisible ? "default" : "secondary"
+                              }
+                            >
                               {material.isVisible ? "Visible" : "Hidden"}
                             </Badge>
                             <span className="text-xs text-gray-500">
-                              {new Date(material.createdAt).toLocaleDateString()}
+                              {new Date(
+                                material.createdAt
+                              ).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
-                        
-                        {userRole === 'lecturer' && (
+
+                        {userRole === "lecturer" && (
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
@@ -345,16 +379,19 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                         )}
                       </div>
                     </CardHeader>
-                    
+
                     <CardContent>
                       <CardDescription className="mb-4">
                         {material.description}
                       </CardDescription>
-                      
+
                       {material.fileAttachment && (
                         <div className="bg-gray-50 p-3 rounded-lg mb-4">
                           <div className="flex items-center gap-3">
-                            {getFileIcon(material.fileAttachment.mimetype, material.fileAttachment.isImage)}
+                            {getFileIcon(
+                              material.fileAttachment.mimetype,
+                              material.fileAttachment.isImage
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">
                                 {material.fileAttachment.originalName}
@@ -366,10 +403,12 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDownload(
-                                material.fileAttachment!.url, 
-                                material.fileAttachment!.originalName
-                              )}
+                              onClick={() =>
+                                handleDownload(
+                                  material.fileAttachment!.url,
+                                  material.fileAttachment!.originalName
+                                )
+                              }
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -378,7 +417,8 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                       )}
 
                       <div className="text-xs text-gray-500">
-                        Updated: {new Date(material.updatedAt).toLocaleDateString()}
+                        Updated:{" "}
+                        {new Date(material.updatedAt).toLocaleDateString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -429,7 +469,9 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                 <label className="text-sm font-medium">File Attachment</label>
                 <FileUpload onFileUploaded={setFile} />
                 {file && (
-                  <div className="text-xs text-green-600">{file.originalName} uploaded</div>
+                  <div className="text-xs text-green-600">
+                    {file.originalName} uploaded
+                  </div>
                 )}
               </div>
               <Button type="submit" className="w-full">
@@ -480,7 +522,9 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
                 <label className="text-sm font-medium">File Attachment</label>
                 <FileUpload onFileUploaded={setFile} />
                 {file && (
-                  <div className="text-xs text-green-600">{file.originalName} uploaded</div>
+                  <div className="text-xs text-green-600">
+                    {file.originalName} uploaded
+                  </div>
                 )}
               </div>
               <Button type="submit" className="w-full">
@@ -492,4 +536,4 @@ export default function CourseMaterialsPage({ userRole }: CourseMaterialsPagePro
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

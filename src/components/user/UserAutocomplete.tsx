@@ -13,11 +13,12 @@ interface User {
 }
 
 interface UserAutocompleteProps {
-  onSelect: (selectedUser: User) => void;
+  onSelect: (selectedUser: User | string[]) => void;
   placeholder?: string;
+  selectedUsers?: string[];
 }
 
-export function UserAutocomplete({ onSelect, placeholder = "Enter email address or username" }: UserAutocompleteProps) {
+export function UserAutocomplete({ onSelect, placeholder = "Enter email address or username", selectedUsers = [] }: UserAutocompleteProps) {
   const { user: currentUser } = useAuthStore();
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -37,25 +38,48 @@ export function UserAutocomplete({ onSelect, placeholder = "Enter email address 
   }, []);
 
   const searchUsers = async () => {
-    if (!query.trim() || query.length < 2) {
+    if (!query.trim() || query.length < 2 || !currentUser) {
       setUsers([]);
       return;
     }
 
     setIsLoading(true);
     try {
+      // Get the token first to avoid async issues
+      let token;
+      try {
+        token = await currentUser.getIdToken(true); // Force refresh token
+      } catch (tokenError) {
+        console.error("Error getting token:", tokenError);
+        toast.error("Authentication error. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(
         `http://localhost:3000/api/users/search?query=${encodeURIComponent(query)}`,
         {
           headers: {
-            Authorization: `Bearer ${await currentUser?.getIdToken()}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      if (!response.ok) throw new Error("Failed to search users");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Search API error:", response.status, errorData);
+        throw new Error(`Failed to search users: ${response.status}`);
+      }
 
       const data = await response.json();
+      
+      // Check if data.users exists and is an array
+      if (!data.users || !Array.isArray(data.users)) {
+        console.error("Unexpected response format:", data);
+        setUsers([]);
+        return;
+      }
+      
       // Filter out current user and sort results
       setUsers(
         data.users
@@ -65,6 +89,7 @@ export function UserAutocomplete({ onSelect, placeholder = "Enter email address 
     } catch (error) {
       console.error("Error searching users:", error);
       toast.error("Failed to search users");
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -72,14 +97,26 @@ export function UserAutocomplete({ onSelect, placeholder = "Enter email address 
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      searchUsers();
+      if (query.trim().length >= 2) {
+        searchUsers();
+      }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
   const handleSelectUser = (selectedUser: User) => {
-    onSelect(selectedUser);
+    if (Array.isArray(selectedUsers)) {
+      // If we're handling an array of selected users
+      const updatedUsers = [...selectedUsers];
+      if (!updatedUsers.includes(selectedUser.email)) {
+        updatedUsers.push(selectedUser.email);
+        onSelect(updatedUsers);
+      }
+    } else {
+      // If we're handling a single user selection
+      onSelect(selectedUser);
+    }
     setQuery("");
     setShowResults(false);
   };
@@ -116,10 +153,10 @@ export function UserAutocomplete({ onSelect, placeholder = "Enter email address 
                 >
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                      {user.displayName[0]}
+                      {user.displayName?.[0] || user.email?.[0] || '?'}
                     </div>
                     <div>
-                      <div className="font-medium">{user.displayName}</div>
+                      <div className="font-medium">{user.displayName || user.email}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
                   </div>
@@ -137,4 +174,4 @@ export function UserAutocomplete({ onSelect, placeholder = "Enter email address 
       )}
     </div>
   );
-} 
+}

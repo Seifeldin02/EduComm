@@ -45,7 +45,11 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
     fetchGroupInfo();
   }, [groupId, user]);
 
-  const updateGroup = async (name: string, description: string, imageUrl: string) => {
+  const updateGroup = async (
+    name: string,
+    description: string,
+    imageUrl: string
+  ) => {
     if (!user || !groupInfo) return false;
 
     try {
@@ -86,7 +90,12 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
   };
 
   const addMembers = async (selectedUsers: string[]) => {
-    if (!user || !groupInfo || selectedUsers.length === 0) {
+    if (!user || !groupInfo) {
+      toast.error("Group information not loaded");
+      return false;
+    }
+
+    if (!selectedUsers || selectedUsers.length === 0) {
       toast.error("Please select users to add");
       return false;
     }
@@ -107,22 +116,49 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
 
       const data = await response.json();
 
-      if (response.ok && data.addedMembers?.length > 0) {
-        setGroupInfo({
-          ...groupInfo,
-          members: [...groupInfo.members, ...data.addedMembers],
-        });
-        toast.success(`Added ${data.addedMembers.length} members successfully`);
+      if (response.ok) {
+        // Check if any members were added
+        if (
+          data.addedMembers &&
+          Array.isArray(data.addedMembers) &&
+          data.addedMembers.length > 0
+        ) {
+          // Update the group info with the new members
+          setGroupInfo({
+            ...groupInfo,
+            members: [...groupInfo.members, ...data.addedMembers],
+          });
+          toast.success(
+            `Added ${data.addedMembers.length} members successfully`
+          );
+        } else {
+          toast.info("No new members were added");
+        }
 
-        if (data.errors?.length > 0) {
+        // Show warnings for any errors
+        if (
+          data.errors &&
+          Array.isArray(data.errors) &&
+          data.errors.length > 0
+        ) {
           data.errors.forEach((error: string) => toast.warning(error));
         }
+
         return true;
       } else {
-        if (data.errors?.length > 0) {
+        // Handle API errors
+        if (
+          data.errors &&
+          Array.isArray(data.errors) &&
+          data.errors.length > 0
+        ) {
           data.errors.forEach((error: string) => toast.error(error));
+        } else if (data.error) {
+          toast.error(data.error);
+        } else {
+          toast.error("Failed to add members");
         }
-        throw new Error(data.error || "Failed to add members");
+        return false;
       }
     } catch (error: any) {
       console.error("Error adding members:", error);
@@ -154,7 +190,6 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
 
       // If deleteMessages is true, delete all messages from this member
       if (deleteMessages) {
-        const messagesRef = ref(db, `groupMessages/${groupId}`);
         const snapshot = await fetch(
           `http://localhost:3000/api/groups/${groupId}/messages?userId=${member.uid}`,
           {
@@ -177,11 +212,11 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
         }
       }
 
-      setGroupInfo(prev => {
+      setGroupInfo((prev) => {
         if (!prev) return null;
         return {
           ...prev,
-          members: prev.members.filter(m => m.uid !== member.uid)
+          members: prev.members.filter((m) => m.uid !== member.uid),
         };
       });
 
@@ -201,4 +236,4 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
     addMembers,
     removeMember,
   };
-}; 
+};

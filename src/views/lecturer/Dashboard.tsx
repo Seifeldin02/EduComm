@@ -38,19 +38,61 @@ export default function LecturerDashboard() {
     const fetchDashboardData = async () => {
       if (!user) return;
       
+      setLoading(true);
+      
       try {
+        // Fetch groups
         const token = await user.getIdToken();
-        const response = await fetch("http://localhost:3000/api/lecturer/dashboard", {
+        const groupsResponse = await fetch("http://localhost:3000/api/groups", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data.stats);
-          setRecentActivity(data.recentActivity);
+        if (!groupsResponse.ok) {
+          throw new Error("Failed to fetch groups");
         }
+        
+        const groupsData = await groupsResponse.json();
+        const groups = groupsData.groups || [];
+        
+        // Calculate total students (unique students across all groups)
+        const uniqueStudents = new Set();
+        groups.forEach((group: any) => {
+          group.members.forEach((member: any) => {
+            if (member.uid !== user.uid) {
+              uniqueStudents.add(member.uid);
+            }
+          });
+        });
+        
+        // Update stats with real data
+        setStats({
+          totalGroups: groups.length,
+          totalStudents: uniqueStudents.size,
+          activeDiscussions: 0, // This would need a separate API call
+          upcomingEvents: 0, // This would need a separate API call
+        });
+        
+        // Create recent activity from groups
+        const activities: RecentActivity[] = [];
+        
+        // Sort groups by creation date (newest first)
+        const sortedGroups = [...groups].sort((a: any, b: any) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        
+        // Take the 5 most recent groups
+        sortedGroups.slice(0, 5).forEach((group: any) => {
+          activities.push({
+            id: group.id,
+            type: "join",
+            description: `Group "${group.name}" was created`,
+            timestamp: new Date(group.createdAt).toLocaleString(),
+          });
+        });
+        
+        setRecentActivity(activities);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -132,12 +174,12 @@ export default function LecturerDashboard() {
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Discussions</CardTitle>
+                  <CardTitle className="text-sm font-medium">Messages</CardTitle>
                   <MessageSquare className="h-4 w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeDiscussions}</div>
-                  <p className="text-xs text-gray-500">Ongoing topics</p>
+                  <div className="text-2xl font-bold">-</div>
+                  <p className="text-xs text-gray-500">Check your messages</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -145,12 +187,12 @@ export default function LecturerDashboard() {
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+                  <CardTitle className="text-sm font-medium">Profile</CardTitle>
                   <Calendar className="h-4 w-4 text-orange-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.upcomingEvents}</div>
-                  <p className="text-xs text-gray-500">Scheduled activities</p>
+                  <div className="text-2xl font-bold">-</div>
+                  <p className="text-xs text-gray-500">Manage your profile</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -181,19 +223,19 @@ export default function LecturerDashboard() {
                     <Button
                       variant="outline"
                       className="w-full justify-between"
-                      onClick={() => navigate("/lecturer/materials")}
+                      onClick={() => navigate("/lecturer/messages")}
                     >
-                      Upload Learning Materials
+                      View Messages
                       <ArrowRight className="w-4 h-4" />
                     </Button>
-        <Button
+                    <Button
                       variant="outline"
                       className="w-full justify-between"
-                      onClick={() => navigate("/lecturer/discussions")}
-        >
-                      View Active Discussions
+                      onClick={() => navigate("/profile")}
+                    >
+                      Edit Profile
                       <ArrowRight className="w-4 h-4" />
-        </Button>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

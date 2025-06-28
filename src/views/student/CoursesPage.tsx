@@ -2,9 +2,22 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { BookOpen, Calendar, Users, FileText, Award, ArrowLeft } from "react-feather";
+import {
+  BookOpen,
+  Calendar,
+  Users,
+  FileText,
+  Award,
+  ArrowLeft,
+} from "react-feather";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +25,7 @@ import { Course } from "@/types/course";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  visible: { opacity: 1, y: 0 },
 };
 
 const listVariants = {
@@ -20,15 +33,15 @@ const listVariants = {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.1
-    }
+      staggerChildren: 0.1,
+    },
   },
   hidden: {
     opacity: 0,
     transition: {
-      when: "afterChildren"
-    }
-  }
+      when: "afterChildren",
+    },
+  },
 };
 
 export default function StudentCoursesPage() {
@@ -45,25 +58,25 @@ export default function StudentCoursesPage() {
 
   const fetchCourses = async () => {
     if (!user) return;
-    
+
     try {
       const token = await user.getIdToken();
       const res = await fetch("http://localhost:3000/api/courses", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch courses');
+        throw new Error(errorData.error || "Failed to fetch courses");
       }
 
       const data = await res.json();
       setCourses(data.courses || []);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error("Error fetching courses:", error);
       toast.error("Failed to fetch courses");
     } finally {
       setLoading(false);
@@ -90,7 +103,7 @@ export default function StudentCoursesPage() {
         <div className="container mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/student/dashboard')}
+            onClick={() => navigate("/student/dashboard")}
             className="flex items-center gap-2 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -98,7 +111,9 @@ export default function StudentCoursesPage() {
           </Button>
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-800">My Courses</h1>
-            <p className="text-gray-600 mt-1">Access your enrolled courses and materials</p>
+            <p className="text-gray-600 mt-1">
+              Access your enrolled courses and materials
+            </p>
           </div>
 
           {loading ? (
@@ -108,8 +123,13 @@ export default function StudentCoursesPage() {
           ) : courses.length === 0 ? (
             <div className="text-center py-8">
               <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No courses yet</h3>
-              <p className="text-gray-500">You haven't been enrolled in any courses yet. Contact your lecturers to get enrolled.</p>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No courses yet
+              </h3>
+              <p className="text-gray-500">
+                You haven't been enrolled in any courses yet. Contact your
+                lecturers to get enrolled.
+              </p>
             </div>
           ) : (
             <motion.div
@@ -125,7 +145,7 @@ export default function StudentCoursesPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Card 
+                  <Card
                     className="cursor-pointer hover:shadow-md transition-all duration-200 h-full"
                     onClick={() => handleCourseClick(course.id)}
                   >
@@ -137,7 +157,9 @@ export default function StudentCoursesPage() {
                             {course.name}
                           </CardTitle>
                           {course.courseCode && (
-                            <p className="text-sm text-gray-500 mt-1">{course.courseCode}</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {course.courseCode}
+                            </p>
                           )}
                         </div>
                         <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -145,59 +167,62 @@ export default function StudentCoursesPage() {
                         </div>
                       </div>
                     </CardHeader>
-                    
-                    <CardContent className="pt-0 flex flex-col h-full">
-                      <CardDescription className="line-clamp-3 mb-4 flex-grow">
+                    <CardContent className="pt-0 flex flex-col">
+                      <CardDescription className="line-clamp-2 mb-3 flex-grow text-sm">
                         {course.description}
                       </CardDescription>
-                      
-                      <div className="space-y-3 mt-auto">
-                        <div className="flex items-center justify-between text-sm text-gray-500">
+
+                      <div className="space-y-2 mt-auto">
+                        <div className="flex items-center justify-between text-xs text-gray-500">
                           <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
+                            <Users className="w-3 h-3 mr-1" />
                             {course.studentCount || 0} students
                           </div>
                           <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
+                            <Calendar className="w-3 h-3 mr-1" />
                             {new Date(course.createdAt).toLocaleDateString()}
                           </div>
                         </div>
 
                         {course.lecturerName && (
-                          <div className="text-sm text-gray-600">
-                            <span className="font-medium">Lecturer:</span> {course.lecturerName}
+                          <div className="text-xs text-gray-600 truncate">
+                            <span className="font-medium">Lecturer:</span>{" "}
+                            {course.lecturerName}
                           </div>
                         )}
-
-                        <div className="flex gap-2 pt-2">
+                        <div className="space-y-2 pt-1">
+                          <div className="grid grid-cols-2 gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs py-1"
+                              onClick={(e) => handleViewMaterials(course.id, e)}
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              Materials
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs py-1"
+                              onClick={(e) =>
+                                handleViewAssignments(course.id, e)
+                              }
+                            >
+                              <Award className="w-3 h-3 mr-1" />
+                              Assignments
+                            </Button>
+                          </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1"
-                            onClick={(e) => handleViewMaterials(course.id, e)}
-                          >
-                            <FileText className="w-4 h-4 mr-1" />
-                            Materials
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => handleViewAssignments(course.id, e)}
-                          >
-                            <Award className="w-4 h-4 mr-1" />
-                            Assignments
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
+                            className="w-full text-xs py-1"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/student/courses/${course.id}/topics`);
                             }}
                           >
-                            <BookOpen className="w-4 h-4 mr-1" />
+                            <BookOpen className="w-3 h-3 mr-1" />
                             Forum Topics
                           </Button>
                         </div>
@@ -212,4 +237,4 @@ export default function StudentCoursesPage() {
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

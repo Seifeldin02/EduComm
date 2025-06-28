@@ -1,33 +1,50 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
-import Layout from '@/components/layout/Layout';
-import { AnimationWrapper } from '@/components/AnimationWrapper';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { FileUpload } from '@/components/chat/FileUpload';
-import { toast } from 'sonner';
-import { Assignment } from '@/types/course';
-import { Award, Plus, Edit2, Trash2, Download, Eye, Calendar, ArrowLeft } from 'react-feather';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
+import Layout from "@/components/layout/Layout";
+import { AnimationWrapper } from "@/components/AnimationWrapper";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { FileUpload } from "@/components/chat/FileUpload";
+import { toast } from "sonner";
+import { Assignment } from "@/types/course";
+import {
+  Award,
+  Plus,
+  Edit2,
+  Trash2,
+  Download,
+  Eye,
+  ArrowLeft,
+} from "react-feather";
 
-export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecturer' }) {
+export default function CourseAssignmentsPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   // Form states
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [maxPoints, setMaxPoints] = useState(100);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [file, setFile] = useState<any>(null);
@@ -43,15 +60,19 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch('http://localhost:3000/api/assignments', {
+      const res = await fetch("http://localhost:3000/api/assignments", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
       if (res.ok) {
         const data = await res.json();
-        setAssignments((data.assignments || []).filter((a: Assignment) => a.courseId === courseId));
+        setAssignments(
+          (data.assignments || []).filter(
+            (a: Assignment) => a.courseId === courseId
+          )
+        );
       } else {
         setAssignments([]);
       }
@@ -67,49 +88,50 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
     if (!user || !courseId) return;
     try {
       const token = await user.getIdToken();
-      const body: any = { courseId, title, description, instructions, dueDate, maxPoints, allowLateSubmission };
+      const body: any = {
+        courseId,
+        title,
+        description,
+        instructions,
+        dueDate,
+        maxPoints,
+        allowLateSubmission,
+      };
       if (file) body.fileAttachment = file;
-      const res = await fetch('http://localhost:3000/api/assignments', {
-        method: 'POST',
+      const res = await fetch("http://localhost:3000/api/assignments", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        toast.success('Assignment created successfully!');
+        toast.success("Assignment created successfully!");
         setIsCreateOpen(false);
-        setTitle('');
-        setDescription('');
-        setInstructions('');
-        setDueDate('');
+        setTitle("");
+        setDescription("");
+        setInstructions("");
+        setDueDate("");
         setMaxPoints(100);
         setAllowLateSubmission(false);
         setFile(null);
         fetchAssignments();
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to create assignment');
+        throw new Error(data.error || "Failed to create assignment");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create assignment');
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create assignment"
+      );
     }
   };
 
-  const handleEditAssignment = async (e: React.FormEvent) => {
-    // For brevity, not implemented here. You can add PUT support in the backend and implement this.
-    e.preventDefault();
-    toast.info('Edit assignment not implemented yet.');
-  };
-
-  const handleDeleteAssignment = async (assignmentId: string) => {
-    // For brevity, not implemented here. You can add DELETE support in the backend and implement this.
-    toast.info('Delete assignment not implemented yet.');
-  };
-
   const handleViewSubmissions = (assignmentId: string) => {
-    navigate(`/lecturer/courses/${courseId}/assignments/${assignmentId}/submissions`);
+    navigate(
+      `/lecturer/courses/${courseId}/assignments/${assignmentId}/submissions`
+    );
   };
 
   return (
@@ -126,7 +148,10 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
               Back to Course
             </Button>
             <h1 className="text-2xl font-bold text-gray-800">Assignments</h1>
-            <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-2"
+            >
               <Plus className="w-4 h-4" />
               Create Assignment
             </Button>
@@ -138,8 +163,12 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
           ) : assignments.length === 0 ? (
             <div className="text-center py-8">
               <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No assignments yet</h3>
-              <p className="text-gray-500">Start by creating an assignment for this course.</p>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No assignments yet
+              </h3>
+              <p className="text-gray-500">
+                Start by creating an assignment for this course.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -152,12 +181,12 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
                         {assignment.title}
                       </CardTitle>
                       <div className="flex items-center gap-1">
+                        {" "}
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            setSelectedAssignment(assignment);
-                            setIsEditOpen(true);
+                            toast.info("Edit assignment not implemented yet.");
                           }}
                         >
                           <Edit2 className="w-4 h-4 text-gray-500" />
@@ -165,7 +194,9 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteAssignment(assignment.id)}
+                          onClick={() =>
+                            toast.info("Delete assignment not implemented yet.")
+                          }
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
@@ -173,10 +204,16 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="mb-2">{assignment.description}</CardDescription>
+                    <CardDescription className="mb-2">
+                      {assignment.description}
+                    </CardDescription>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">Due: {new Date(assignment.dueDate).toLocaleDateString()}</Badge>
-                      <Badge variant="secondary">{assignment.maxPoints} pts</Badge>
+                      <Badge variant="outline">
+                        Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                      </Badge>
+                      <Badge variant="secondary">
+                        {assignment.maxPoints} pts
+                      </Badge>
                     </div>
                     {assignment.fileAttachment && (
                       <div className="flex items-center gap-2 mb-2">
@@ -184,7 +221,12 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            window.open(`http://localhost:3000${assignment.fileAttachment!.url}`, '_blank');
+                            window.open(
+                              `http://localhost:3000${
+                                assignment.fileAttachment!.url
+                              }`,
+                              "_blank"
+                            );
                           }}
                         >
                           <Download className="w-4 h-4" />
@@ -212,7 +254,10 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
               <DialogHeader>
                 <DialogTitle>Create Assignment</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleCreateAssignment} className="space-y-4 mt-4">
+              <form
+                onSubmit={handleCreateAssignment}
+                className="space-y-4 mt-4"
+              >
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title</label>
                   <Input
@@ -276,7 +321,9 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
                   <label className="text-sm font-medium">File Attachment</label>
                   <FileUpload onFileUploaded={setFile} />
                   {file && (
-                    <div className="text-xs text-green-600">{file.originalName} uploaded</div>
+                    <div className="text-xs text-green-600">
+                      {file.originalName} uploaded
+                    </div>
                   )}
                 </div>
                 <Button type="submit" className="w-full">
@@ -289,4 +336,4 @@ export default function CourseAssignmentsPage({ userRole }: { userRole: 'lecture
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

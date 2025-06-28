@@ -23,6 +23,8 @@
     "educomm": "file:",
     "firebase": "^10.8.0",
     "framer-motion": "^11.0.5",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.5.28",
     "lucide-react": "^0.330.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

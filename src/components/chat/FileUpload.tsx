@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { Paperclip, Image, X, Upload } from 'react-feather';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/useAuthStore';
-import { toast } from 'sonner';
-import { FileAttachment } from '@/types/chat';
+import { useState, useRef } from "react";
+import { Paperclip } from "react-feather";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/useAuthStore";
+import { toast } from "sonner";
+import { FileAttachment } from "@/types/chat";
 
 interface FileUploadProps {
   onFileUploaded: (file: FileAttachment) => void;
@@ -19,12 +19,13 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
 
   const handleFileSelect = async (file: File) => {
     if (!user) {
-      toast.error('You must be logged in to upload files');
+      toast.error("You must be logged in to upload files");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      toast.error('File size must be less than 10MB');
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      toast.error("File size must be less than 10MB");
       return;
     }
 
@@ -32,29 +33,30 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const token = await user.getIdToken();
-      const response = await fetch('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/api/upload", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        throw new Error(error.error || "Upload failed");
       }
 
       const data = await response.json();
       onFileUploaded(data.file);
-      toast.success('File uploaded successfully');
-
+      toast.success("File uploaded successfully");
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload file');
+      console.error("Upload error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload file"
+      );
     } finally {
       setIsUploading(false);
     }
@@ -66,7 +68,7 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
       handleFileSelect(files[0]);
     }
     // Reset input value to allow re-uploading the same file
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -101,7 +103,9 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
       />
 
       <div
-        className={`flex items-center space-x-2 ${dragOver ? 'bg-blue-50 rounded-lg p-2' : ''}`}
+        className={`flex items-center space-x-2 ${
+          dragOver ? "bg-blue-50 rounded-lg p-2" : ""
+        }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -130,4 +134,4 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
       </div>
     </div>
   );
-} 
+}

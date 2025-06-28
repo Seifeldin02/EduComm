@@ -3,25 +3,31 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { 
-  BookOpen, 
-  Users, 
-  Calendar, 
-  FileText, 
-  Plus, 
-  Settings, 
+import {
+  BookOpen,
+  Users,
+  Calendar,
+  FileText,
+  Plus,
+  Settings,
   Award,
-  User
+  User,
 } from "react-feather";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Course, CourseMaterial, Assignment } from "@/types/course";
 
 interface CourseDetailPageProps {
-  userRole: 'student' | 'lecturer';
+  userRole: "student" | "lecturer";
 }
 
 export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
@@ -41,20 +47,23 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
 
   const fetchCourseData = async () => {
     if (!user || !courseId) return;
-    
+
     try {
       const token = await user.getIdToken();
-      
+
       // Fetch course details
-      const courseRes = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
+      const courseRes = await fetch(
+        `http://localhost:3000/api/courses/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!courseRes.ok) {
-        throw new Error('Failed to fetch course details');
+        throw new Error("Failed to fetch course details");
       }
 
       const courseData = await courseRes.json();
@@ -62,33 +71,39 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
 
       // Fetch materials
       try {
-        const materialsRes = await fetch(`http://localhost:3000/api/courses/${courseId}/materials`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
+        const materialsRes = await fetch(
+          `http://localhost:3000/api/courses/${courseId}/materials`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (materialsRes.ok) {
           const materialsData = await materialsRes.json();
           setMaterials(materialsData.materials || []);
         } else {
-          console.warn('Failed to fetch materials');
+          console.warn("Failed to fetch materials");
           setMaterials([]);
         }
       } catch (error) {
-        console.warn('Error fetching materials:', error);
+        console.warn("Error fetching materials:", error);
         setMaterials([]);
       }
 
       // Fetch assignments - get all assignments and filter by courseId
       try {
-        const assignmentsRes = await fetch(`http://localhost:3000/api/assignments`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
+        const assignmentsRes = await fetch(
+          `http://localhost:3000/api/assignments`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (assignmentsRes.ok) {
           const assignmentsData = await assignmentsRes.json();
@@ -98,16 +113,15 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
           );
           setAssignments(courseAssignments);
         } else {
-          console.warn('Failed to fetch assignments');
+          console.warn("Failed to fetch assignments");
           setAssignments([]);
         }
       } catch (error) {
-        console.warn('Error fetching assignments:', error);
+        console.warn("Error fetching assignments:", error);
         setAssignments([]);
       }
-
     } catch (error) {
-      console.error('Error fetching course data:', error);
+      console.error("Error fetching course data:", error);
       toast.error("Failed to load course details");
     } finally {
       setLoading(false);
@@ -119,7 +133,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
   };
 
   const handleViewAssignments = () => {
-    if (userRole === 'student') {
+    if (userRole === "student") {
       navigate(`/student/assignments?course=${courseId}`);
     } else {
       navigate(`/lecturer/courses/${courseId}/assignments`);
@@ -151,9 +165,14 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
       <AnimationWrapper>
         <Layout>
           <div className="text-center py-8">
-            <h2 className="text-xl font-bold text-gray-800">Course not found</h2>
-            <p className="text-gray-600 mt-2">The course you're looking for doesn't exist or you don't have access to it.</p>
-            <Button 
+            <h2 className="text-xl font-bold text-gray-800">
+              Course not found
+            </h2>
+            <p className="text-gray-600 mt-2">
+              The course you're looking for doesn't exist or you don't have
+              access to it.
+            </p>
+            <Button
               className="mt-4"
               onClick={() => navigate(`/${userRole}/courses`)}
             >
@@ -179,13 +198,17 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <BookOpen className="w-8 h-8 text-blue-500" />
-                  <h1 className="text-3xl font-bold text-gray-800">{course.name}</h1>
+                  <h1 className="text-3xl font-bold text-gray-800">
+                    {course.name}
+                  </h1>
                   {course.courseCode && (
                     <Badge variant="outline">{course.courseCode}</Badge>
                   )}
                 </div>
-                <p className="text-gray-600 text-lg mb-4">{course.description}</p>
-                
+                <p className="text-gray-600 text-lg mb-4">
+                  {course.description}
+                </p>
+
                 <div className="flex items-center gap-6 text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
@@ -203,8 +226,8 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                   )}
                 </div>
               </div>
-              
-              {userRole === 'lecturer' && course.isLecturer && (
+
+              {userRole === "lecturer" && course.isLecturer && (
                 <Button
                   variant="outline"
                   onClick={handleManageCourse}
@@ -216,7 +239,6 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
               )}
             </div>
           </motion.div>
-
           {/* Course Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Course Materials */}
@@ -232,7 +254,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                       <FileText className="w-5 h-5 text-blue-500" />
                       Course Materials
                     </CardTitle>
-                    {userRole === 'lecturer' && course.isLecturer && (
+                    {userRole === "lecturer" && course.isLecturer && (
                       <Button
                         size="sm"
                         onClick={handleViewMaterials}
@@ -255,16 +277,23 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                   ) : (
                     <div className="space-y-3">
                       {materials.slice(0, 3).map((material) => (
-                        <div key={material.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div
+                          key={material.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <FileText className="w-4 h-4 text-gray-500" />
                             <div>
-                              <p className="font-medium text-sm">{material.title}</p>
-                              <p className="text-xs text-gray-500">{material.description}</p>
+                              <p className="font-medium text-sm">
+                                {material.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {material.description}
+                              </p>
                             </div>
                           </div>
                           <Badge variant="secondary" className="text-xs">
-                            {material.fileAttachment ? 'File' : 'Text'}
+                            {material.fileAttachment ? "File" : "Text"}
                           </Badge>
                         </div>
                       ))}
@@ -299,7 +328,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                       <Award className="w-5 h-5 text-green-500" />
                       Assignments
                     </CardTitle>
-                    {userRole === 'lecturer' && course.isLecturer && (
+                    {userRole === "lecturer" && course.isLecturer && (
                       <Button
                         size="sm"
                         onClick={handleViewAssignments}
@@ -322,13 +351,21 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                   ) : (
                     <div className="space-y-3">
                       {assignments.slice(0, 3).map((assignment) => (
-                        <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div
+                          key={assignment.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <Award className="w-4 h-4 text-gray-500" />
                             <div>
-                              <p className="font-medium text-sm">{assignment.title}</p>
+                              <p className="font-medium text-sm">
+                                {assignment.title}
+                              </p>
                               <p className="text-xs text-gray-500">
-                                Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                                Due:{" "}
+                                {new Date(
+                                  assignment.dueDate
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -354,8 +391,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
                 </CardContent>
               </Card>
             </motion.div>
-          </div>
-
+          </div>{" "}
           {/* Topics (Forum) Button */}
           <div className="mt-8 flex justify-center">
             <Button
@@ -366,42 +402,65 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
               Forum Topics
             </Button>
           </div>
-
-          {/* Students List (Lecturer Only) */}
-          {userRole === 'lecturer' && course.isLecturer && course.studentsInfo && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-8"
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-purple-500" />
-                    Enrolled Students ({course.studentsInfo.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {course.studentsInfo.map((student) => (
-                      <div key={student.uid} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                          {student.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{student.name}</p>
-                          <p className="text-xs text-gray-500">{student.email}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          {/* Lecturer Actions */}
+          {userRole === "lecturer" && course.isLecturer && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="default"
+                className="w-full max-w-xs"
+                onClick={() =>
+                  navigate(`/lecturer/courses/${course.id}/manage`)
+                }
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Course
+              </Button>
+            </div>
           )}
+          {/* Students List (Lecturer Only) */}
+          {userRole === "lecturer" &&
+            course.isLecturer &&
+            course.studentsInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-8"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-purple-500" />
+                      Enrolled Students ({course.studentsInfo.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {course.studentsInfo.map((student) => (
+                        <div
+                          key={student.uid}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {student.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">
+                              {student.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {student.email}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
         </div>
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

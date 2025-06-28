@@ -5,12 +5,10 @@ import {
   push,
   onValue,
   off,
-  serverTimestamp,
   query,
   orderByChild,
   limitToLast,
   get,
-  startAt,
   endBefore,
 } from "firebase/database";
 import { Message, FileAttachment } from "@/types/chat";
@@ -47,19 +45,23 @@ export const useMessages = (groupId: string, user: any | null) => {
             ...data,
           }))
           // Filter out messages already processed by ID to prevent duplicates
-          .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
+          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
         if (messagesList.length > 0) {
           // Add new message IDs to the loaded set
-          messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+          messagesList.forEach((msg) =>
+            loadedMessageIdsRef.current.add(msg.id)
+          );
 
-          setMessages(prev => {
+          setMessages((prev) => {
             // Create a map of existing messages for quick lookup
-            const prevMap = new Map(prev.map(m => [m.id, m]));
+            const prevMap = new Map(prev.map((m) => [m.id, m]));
             // Add new messages, replacing if ID exists, then sort
-            messagesList.forEach(msg => prevMap.set(msg.id, msg));
-            return Array.from(prevMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+            messagesList.forEach((msg) => prevMap.set(msg.id, msg));
+            return Array.from(prevMap.values()).sort(
+              (a, b) => a.timestamp - b.timestamp
+            );
           });
 
           // Only update oldestMessageTimestampRef on the VERY FIRST load from this listener
@@ -72,17 +74,19 @@ export const useMessages = (groupId: string, user: any | null) => {
         // If onValue is for NEW messages, this check might be misleading.
         // It's more reliable in loadMoreMessages. For initial load:
         if (!initialLoadDoneRef.current) {
-            setHasMoreMessages(Object.keys(messagesData).length >= MESSAGES_PER_PAGE);
+          setHasMoreMessages(
+            Object.keys(messagesData).length >= MESSAGES_PER_PAGE
+          );
         }
-
       } else {
         // No messages initially, or all messages were deleted
-        if (!initialLoadDoneRef.current) { // Only clear if it's an initial load scenario
-            setMessages([]);
-            setHasMoreMessages(false);
+        if (!initialLoadDoneRef.current) {
+          // Only clear if it's an initial load scenario
+          setMessages([]);
+          setHasMoreMessages(false);
         }
       }
-      
+
       if (!initialLoadDoneRef.current) {
         setIsLoading(false);
         initialLoadDoneRef.current = true;
@@ -100,7 +104,14 @@ export const useMessages = (groupId: string, user: any | null) => {
 
   // Function to load older messages
   const loadMoreMessages = async () => {
-    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current || !initialLoadDoneRef.current) return;
+    if (
+      !user ||
+      isLoadingMore ||
+      !hasMoreMessages ||
+      !oldestMessageTimestampRef.current ||
+      !initialLoadDoneRef.current
+    )
+      return;
 
     setIsLoadingMore(true);
 
@@ -113,7 +124,7 @@ export const useMessages = (groupId: string, user: any | null) => {
       );
 
       const snapshot = await get(olderMessagesQuery);
-      
+
       if (snapshot.exists()) {
         const messagesData = snapshot.val();
         const messagesList = Object.entries(messagesData)
@@ -121,20 +132,22 @@ export const useMessages = (groupId: string, user: any | null) => {
             id,
             ...data,
           }))
-          .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
+          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
         // Update loaded message IDs
-        messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+        messagesList.forEach((msg) => loadedMessageIdsRef.current.add(msg.id));
 
         if (messagesList.length > 0) {
           // THIS IS THE CORRECT PLACE TO UPDATE oldestMessageTimestampRef for pagination
           oldestMessageTimestampRef.current = messagesList[0].timestamp;
-          
-          setMessages(prev => {
+
+          setMessages((prev) => {
             // Prevent duplicates when loading more
-            const existingIds = new Set(prev.map(m => m.id));
-            const uniqueNewMessages = messagesList.filter(m => !existingIds.has(m.id));
+            const existingIds = new Set(prev.map((m) => m.id));
+            const uniqueNewMessages = messagesList.filter(
+              (m) => !existingIds.has(m.id)
+            );
             const combined = [...uniqueNewMessages, ...prev];
             return combined.sort((a, b) => a.timestamp - b.timestamp);
           });
@@ -160,30 +173,40 @@ export const useMessages = (groupId: string, user: any | null) => {
         text: newMessage,
         timestamp: Date.now(),
         senderId: user.uid,
-        senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
+        senderName:
+          user.displayName || user.email?.split("@")[0] || "Unknown User",
         type: "text" as const,
       };
       const msgRef = await push(messagesRef.current, messageData);
       // Notify backend for unread/notification logic
       try {
         const token = await user.getIdToken();
-        let lastMessagePreview = '';
-        if (messageData.type === 'text') {
+        let lastMessagePreview = "";
+        if (messageData.type === "text") {
           lastMessagePreview = messageData.text;
-        } else if (messageData.type === 'image') {
-          lastMessagePreview = '[Image]';
-        } else if (messageData.type === 'file') {
-          lastMessagePreview = '[File]';
+        } else if (messageData.type === "image") {
+          lastMessagePreview = "[Image]";
+        } else if (messageData.type === "file") {
+          lastMessagePreview = "[File]";
         }
-        await fetch(`http://localhost:3000/api/groups/${groupId}/notify-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
-        });
-      } catch (e) { /* ignore notify errors */ }
+        await fetch(
+          `http://localhost:3000/api/groups/${groupId}/notify-message`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              messageId: msgRef.key,
+              timestamp: messageData.timestamp,
+              lastMessage: lastMessagePreview,
+            }),
+          }
+        );
+      } catch (e) {
+        /* ignore notify errors */
+      }
       return true;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -198,31 +221,41 @@ export const useMessages = (groupId: string, user: any | null) => {
         text: "",
         timestamp: Date.now(),
         senderId: user.uid,
-        senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
-        type: file.isImage ? "image" : "file" as const,
+        senderName:
+          user.displayName || user.email?.split("@")[0] || "Unknown User",
+        type: file.isImage ? "image" : ("file" as const),
         fileAttachment: file,
       };
       const msgRef = await push(messagesRef.current, messageData);
       // Notify backend for unread/notification logic
       try {
         const token = await user.getIdToken();
-        let lastMessagePreview = '';
-        if (messageData.type === 'text') {
+        let lastMessagePreview = "";
+        if (messageData.type === "text") {
           lastMessagePreview = messageData.text;
-        } else if (messageData.type === 'image') {
-          lastMessagePreview = '[Image]';
-        } else if (messageData.type === 'file') {
-          lastMessagePreview = '[File]';
+        } else if (messageData.type === "image") {
+          lastMessagePreview = "[Image]";
+        } else if (messageData.type === "file") {
+          lastMessagePreview = "[File]";
         }
-        await fetch(`http://localhost:3000/api/groups/${groupId}/notify-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
-        });
-      } catch (e) { /* ignore notify errors */ }
+        await fetch(
+          `http://localhost:3000/api/groups/${groupId}/notify-message`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              messageId: msgRef.key,
+              timestamp: messageData.timestamp,
+              lastMessage: lastMessagePreview,
+            }),
+          }
+        );
+      } catch (e) {
+        /* ignore notify errors */
+      }
       return true;
     } catch (error) {
       console.error("Error sending file message:", error);
@@ -237,7 +270,7 @@ export const useMessages = (groupId: string, user: any | null) => {
     try {
       // Optimistically remove from local state
       const originalMessages = messages;
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
       loadedMessageIdsRef.current.delete(messageId);
 
       const token = await user.getIdToken();
@@ -256,16 +289,18 @@ export const useMessages = (groupId: string, user: any | null) => {
         // Revert optimistic update on failure
         setMessages(originalMessages);
         loadedMessageIdsRef.current.add(messageId);
-        
+
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete message");
       }
-      
+
       toast.success("Message deleted");
       return true;
     } catch (error) {
       console.error("Error deleting message:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete message");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete message"
+      );
       return false;
     }
   };
@@ -281,4 +316,4 @@ export const useMessages = (groupId: string, user: any | null) => {
     loadMoreMessages,
     initialLoadDone: initialLoadDoneRef.current,
   };
-}; 
+};

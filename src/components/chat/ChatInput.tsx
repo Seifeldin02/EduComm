@@ -15,8 +15,10 @@ export function ChatInput({ onSendMessage, onSendFile }: ChatInputProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await onSendMessage(newMessage)) {
-      setNewMessage("");
+    const messageToSend = newMessage;
+    setNewMessage("");
+    if (messageToSend.trim()) {
+      await onSendMessage(messageToSend);
     }
   };
 

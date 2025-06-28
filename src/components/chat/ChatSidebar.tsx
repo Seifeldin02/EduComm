@@ -5,14 +5,13 @@ import { GroupAvatar } from "@/components/ui/GroupAvatar";
 import { MemberItem } from "./MemberItem";
 import { SidebarProps } from "@/types/chat";
 
-export function ChatSidebar({ 
-  group, 
-  expanded, 
-  onExpand, 
-  onEdit, 
-  onAddMembers, 
+export function ChatSidebar({
+  group,
+  expanded,
+  onEdit,
+  onAddMembers,
   onRemoveMember,
-  currentUserId 
+  currentUserId,
 }: SidebarProps) {
   return (
     <AnimatePresence>
@@ -59,11 +58,7 @@ export function ChatSidebar({
                   Members ({group?.members.length})
                 </h4>
                 {group?.createdBy === currentUserId && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onAddMembers}
-                  >
+                  <Button variant="ghost" size="sm" onClick={onAddMembers}>
                     <Users className="w-4 h-4 mr-2" />
                     Add
                   </Button>
@@ -86,4 +81,4 @@ export function ChatSidebar({
       )}
     </AnimatePresence>
   );
-} 
+}

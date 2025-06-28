@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { Plus, Edit2, Trash2, MessageCircle } from "react-feather";
+import { Plus, Edit2, Trash2, MessageCircle, UserPlus } from "react-feather";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -16,9 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { UserAutocomplete } from "@/components/user/UserAutocomplete";
 import { GroupAvatar } from "@/components/ui/GroupAvatar";
 import { useNavigate } from "react-router-dom";
+import { AddMembersModal } from "@/components/modals/AddMembersModal";
 
 interface Group {
   id: string;
@@ -36,7 +36,7 @@ interface Group {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  visible: { opacity: 1, y: 0 },
 };
 
 const listVariants = {
@@ -44,15 +44,15 @@ const listVariants = {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.1
-    }
+      staggerChildren: 0.1,
+    },
   },
   hidden: {
     opacity: 0,
     transition: {
-      when: "afterChildren"
-    }
-  }
+      when: "afterChildren",
+    },
+  },
 };
 
 export default function GroupsPage() {
@@ -62,7 +62,6 @@ export default function GroupsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
-  const [newMembers, setNewMembers] = useState<string[]>([]);
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
@@ -79,28 +78,28 @@ export default function GroupsPage() {
 
   const fetchGroups = async () => {
     if (!user) return;
-    
+
     try {
       const token = await user.getIdToken();
       const res = await fetch("http://localhost:3000/api/groups", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
-        mode: 'cors'
+        credentials: "include",
+        mode: "cors",
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch groups');
+        throw new Error(errorData.error || "Failed to fetch groups");
       }
 
       const data = await res.json();
-      console.log('Fetched groups:', data); // Debug log
+      console.log("Fetched groups:", data); // Debug log
       setGroups(data.groups || []);
     } catch (error) {
-      console.error('Error fetching groups:', error);
+      console.error("Error fetching groups:", error);
       toast.error("Failed to fetch groups");
     } finally {
       setLoading(false);
@@ -116,10 +115,10 @@ export default function GroupsPage() {
       const res = await fetch("http://localhost:3000/api/groups", {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({ name, description, imageUrl }),
       });
 
@@ -129,19 +128,21 @@ export default function GroupsPage() {
         setName("");
         setDescription("");
         setImageUrl("");
-        
+
         // First fetch the latest groups data
         await fetchGroups();
-        
+
         // Then refresh the entire page
         window.location.reload();
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to create group');
+        throw new Error(data.error || "Failed to create group");
       }
     } catch (error) {
-      console.error('Error creating group:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to create group");
+      console.error("Error creating group:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create group"
+      );
     }
   };
 
@@ -151,15 +152,18 @@ export default function GroupsPage() {
 
     try {
       const token = await user?.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/groups/${selectedGroup.id}`, {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify({ name, description, imageUrl }),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/groups/${selectedGroup.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ name, description, imageUrl }),
+        }
+      );
 
       if (res.ok) {
         toast.success("Group updated successfully!");
@@ -175,17 +179,22 @@ export default function GroupsPage() {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
-    if (!confirm("Are you sure you want to delete this group? This action cannot be undone.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this group? This action cannot be undone."
+      )
+    )
+      return;
 
     try {
       const token = await user?.getIdToken();
       const res = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
         method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (res.ok) {
@@ -200,82 +209,8 @@ export default function GroupsPage() {
     }
   };
 
-  const handleAddMembers = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedGroup) return;
-
-    // newMembers is now an array of email addresses
-    if (newMembers.length === 0) {
-      toast.error("Please select at least one user");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const token = await user?.getIdToken();
-      
-      // Create the request with proper headers
-      const response = await fetch(`http://localhost:3000/api/groups/${selectedGroup.id}/members`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ members: newMembers }),
-      });
-
-      // Check for non-JSON responses
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("Non-JSON response received:", await response.text());
-        throw new Error("Server returned non-JSON response. Please check server logs.");
-      }
-
-      // Parse the JSON response
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error("Error parsing response:", parseError);
-        console.error("Response status:", response.status, response.statusText);
-        throw new Error("Failed to parse server response. Please check server logs.");
-      }
-
-      // Handle successful response
-      if (response.ok) {
-        if (data.errors?.length > 0) {
-          const errorMessages = data.errors.map((err: { email: string; error: string }) => 
-            `${err.email}: ${err.error}`
-          ).join(', ');
-          
-          if (data.addedMembers.length > 0) {
-            toast.warning(`Added ${data.addedMembers.length} members. Some members couldn't be added: ${errorMessages}`);
-          } else {
-            toast.error(`Failed to add members: ${errorMessages}`);
-          }
-        } else {
-          toast.success(`Added ${data.addedMembers.length} members successfully!`);
-        }
-        setIsAddMembersOpen(false);
-        setNewMembers([]);
-        await fetchGroups();
-      } else {
-        // Handle error response
-        throw new Error(data.error || data.details || `Server error: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error adding members:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to add members");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMemberSelect = (selectedUser: any) => {
-    // Add the selected user's email to the newMembers array if not already present
-    if (!newMembers.includes(selectedUser.email)) {
-      setNewMembers(prev => [...prev, selectedUser.email]);
-    }
+  const handleAddMembersSuccess = () => {
+    fetchGroups(); // Refresh the groups list
   };
 
   const handleGroupClick = (groupId: string) => {
@@ -318,7 +253,9 @@ export default function GroupsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Image URL (optional)</label>
+                    <label className="text-sm font-medium">
+                      Image URL (optional)
+                    </label>
                     <Input
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
@@ -356,14 +293,14 @@ export default function GroupsPage() {
                   whileTap={{ scale: 0.98 }}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
                 >
-                  <div 
+                  <div
                     className="relative h-48 bg-gray-100 flex items-center justify-center group"
                     onClick={() => handleGroupClick(group.id)}
                   >
-                    <GroupAvatar 
-                      name={group.name} 
-                      imageUrl={group.imageUrl} 
-                      size="xl" 
+                    <GroupAvatar
+                      name={group.name}
+                      imageUrl={group.imageUrl}
+                      size="xl"
                       className="w-32 h-32 transition-opacity group-hover:opacity-80"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
@@ -374,7 +311,9 @@ export default function GroupsPage() {
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-800">{group.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {group.name}
+                      </h3>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="ghost"
@@ -384,7 +323,7 @@ export default function GroupsPage() {
                             setSelectedGroup(group);
                             setName(group.name);
                             setDescription(group.description);
-                            setImageUrl(group.imageUrl || '');
+                            setImageUrl(group.imageUrl || "");
                             setIsEditOpen(true);
                           }}
                         >
@@ -402,7 +341,9 @@ export default function GroupsPage() {
                         </Button>
                       </div>
                     </div>
-                    <p className="text-gray-600 mt-1 line-clamp-2">{group.description}</p>
+                    <p className="text-gray-600 mt-1 line-clamp-2">
+                      {group.description}
+                    </p>
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-sm text-gray-500">
                         {group.members.length} members
@@ -413,17 +354,19 @@ export default function GroupsPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedGroup(group);
-                          setNewMembers([]);
                           setIsAddMembersOpen(true);
                         }}
                       >
+                        <UserPlus className="w-4 h-4 mr-1" />
                         Add Members
                       </Button>
                     </div>
                   </div>
 
                   <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Members</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Members
+                    </h4>
                     <div className="space-y-2">
                       {group.members.slice(0, 3).map((member) => (
                         <div
@@ -435,7 +378,9 @@ export default function GroupsPage() {
                           </div>
                           <span>{member.displayName}</span>
                           {member.uid === group.createdBy && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Lecturer</span>
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                              Lecturer
+                            </span>
                           )}
                         </div>
                       ))}
@@ -491,50 +436,17 @@ export default function GroupsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Add Members Dialog */}
-        <Dialog open={isAddMembersOpen} onOpenChange={setIsAddMembersOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Members</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <UserAutocomplete
-                onSelect={handleMemberSelect}
-                placeholder="Search users by email or username"
-              />
-              
-              {/* Show selected members */}
-              {newMembers.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Selected Members:</label>
-                  <div className="space-y-1">
-                    {newMembers.map((email, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="text-sm">{email}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setNewMembers(prev => prev.filter((_, i) => i !== index))}
-                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <Button
-                className="w-full"
-                onClick={handleAddMembers}
-                disabled={newMembers.length === 0}
-              >
-                Add {newMembers.length} Member{newMembers.length !== 1 ? 's' : ''}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Add Members Modal */}
+        {selectedGroup && (
+          <AddMembersModal
+            isOpen={isAddMembersOpen}
+            onClose={() => setIsAddMembersOpen(false)}
+            onSuccess={handleAddMembersSuccess}
+            targetId={selectedGroup.id}
+            targetType="group"
+            title={`Add Members to ${selectedGroup.name}`}
+          />
+        )}
       </Layout>
     </AnimationWrapper>
   );

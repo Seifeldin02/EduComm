@@ -18,12 +18,11 @@ import {
   ArrowLeft,
 } from "react-feather";
 import { jsPDF } from "jspdf";
+// @ts-ignore
+import autoTable from "jspdf-autotable";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// @ts-ignore - Import autotable plugin
-import "jspdf-autotable";
 
 // Extend jsPDF with autoTable property
 declare module "jspdf" {
@@ -31,7 +30,7 @@ declare module "jspdf" {
     lastAutoTable: {
       finalY: number;
     };
-    autoTable: any;
+    autoTable: typeof autoTable;
   }
 }
 
@@ -116,66 +115,51 @@ export default function StudentReportActivityPage() {
         }
       );
 
-      // Fetch submissions for the current user
-      const submissionsRes = await fetch(
-        "http://localhost:3000/api/submissions",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
       let assignmentDetails: AssignmentDetail[] = [];
       let totalAssigned = 0;
       let totalSubmitted = 0;
       let totalGradePoints = 0;
       let gradedSubmissions = 0;
-      let userSubmissions: any[] = [];
-
-      // Get user's submissions
-      if (submissionsRes.ok) {
-        const submissionsData = await submissionsRes.json();
-        userSubmissions = (submissionsData.submissions || []).filter(
-          (s: any) => s.studentId === user.uid
-        );
-        totalSubmitted = userSubmissions.length;
-
-        // Calculate grade statistics
-        userSubmissions.forEach((submission: any) => {
-          if (submission.grade !== undefined && submission.grade !== null) {
-            totalGradePoints += submission.grade;
-            gradedSubmissions++;
-          }
-        });
-      }
 
       if (assignmentsRes.ok) {
         const assignmentsData = await assignmentsRes.json();
-        // The API already filters assignments for students based on enrolled courses
         const userAssignments = assignmentsData.assignments || [];
         totalAssigned = userAssignments.length;
 
-        // Match assignments with submissions
-        assignmentDetails = userAssignments.map((assignment: any) => {
-          const userSubmission = userSubmissions.find(
-            (s: any) => s.assignmentId === assignment.id
+        // Check submissions for each assignment
+        for (const assignment of userAssignments) {
+          const submissionRes = await fetch(
+            `http://localhost:3000/api/assignments/${assignment.id}/submissions`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
           );
 
           let submissionStatus: "submitted" | "pending" | "graded" = "pending";
           let grade: number | undefined;
 
-          if (userSubmission) {
-            submissionStatus =
-              userSubmission.grade !== undefined &&
-              userSubmission.grade !== null
-                ? "graded"
-                : "submitted";
-            grade = userSubmission.grade;
+          if (submissionRes.ok) {
+            const submissionData = await submissionRes.json();
+            const userSubmission = submissionData.submissions?.find(
+              (s: any) => s.studentId === user.uid
+            );
+
+            if (userSubmission) {
+              totalSubmitted++;
+              submissionStatus =
+                userSubmission.grade !== undefined ? "graded" : "submitted";
+              if (userSubmission.grade !== undefined) {
+                grade = userSubmission.grade;
+                totalGradePoints += userSubmission.grade;
+                gradedSubmissions++;
+              }
+            }
           }
 
-          return {
+          assignmentDetails.push({
             id: assignment.id,
             title: assignment.title,
             courseName: assignment.courseName || "Unknown Course",
@@ -183,8 +167,8 @@ export default function StudentReportActivityPage() {
             maxPoints: assignment.maxPoints || 100,
             submittedGrade: grade,
             status: submissionStatus,
-          };
-        });
+          });
+        }
       }
 
       // Fetch courses
@@ -728,52 +712,6 @@ export default function StudentReportActivityPage() {
                           <div className="flex justify-between text-sm text-gray-600 mt-2">
                             <span>{course.assignmentCount} assignments</span>
                             <span>{course.topicCount} topics</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Group Memberships */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-            >
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-orange-500" />
-                    Group Memberships
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {groups.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">
-                      No groups found
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {groups.map((group) => (
-                        <div
-                          key={group.id}
-                          className="p-4 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-gray-800">
-                              {group.name}
-                            </h4>
-                            <Users className="w-4 h-4 text-gray-400" />
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <p>{group.memberCount} members</p>
-                            <p>
-                              Joined:{" "}
-                              {new Date(group.joinDate).toLocaleDateString()}
-                            </p>
                           </div>
                         </div>
                       ))}

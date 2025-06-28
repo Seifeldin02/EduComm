@@ -11,8 +11,15 @@ import { ChatInput } from "./ChatInput";
 import { useMessages } from "@/hooks/chat/useMessages";
 import { useTranslation } from "@/hooks/chat/useTranslation";
 import { useGroupManagement } from "@/hooks/chat/useGroupManagement";
-import { firestore } from '@/firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { firestore } from "@/firebase/firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 
 interface GroupChatProps {
   groupId: string;
@@ -42,13 +49,8 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   } = useMessages(groupId, user);
   const { selectedLanguage, setSelectedLanguage, translatedMessages } =
     useTranslation(messages);
-  const {
-    groupInfo,
-    isLoading: groupLoading,
-    updateGroup,
-    addMembers,
-    removeMember,
-  } = useGroupManagement(groupId, user);
+  const { groupInfo, updateGroup, addMembers, removeMember } =
+    useGroupManagement(groupId, user);
 
   useEffect(() => {
     const markGroupNotificationsAsRead = async () => {
@@ -56,25 +58,30 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
       // Mark notifications as read in Firestore
       const q = query(
         collection(firestore, `notifications/${user.uid}/items`),
-        where('type', '==', 'group_message'),
-        where('groupId', '==', groupId),
-        where('read', '==', false)
+        where("type", "==", "group_message"),
+        where("groupId", "==", groupId),
+        where("read", "==", false)
       );
       const snapshot = await getDocs(q);
       for (const notifDoc of snapshot.docs) {
-        await updateDoc(doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`), { read: true });
+        await updateDoc(
+          doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`),
+          { read: true }
+        );
       }
       // Update lastRead in backend
       try {
         const token = await user.getIdToken();
         await fetch(`http://localhost:3000/api/groups/${groupId}/read`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
-      } catch (e) { /* ignore errors */ }
+      } catch (e) {
+        /* ignore errors */
+      }
     };
     markGroupNotificationsAsRead();
   }, [groupId, user, messages.length]);
@@ -163,4 +170,4 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
       />
     </div>
   );
-} 
+}

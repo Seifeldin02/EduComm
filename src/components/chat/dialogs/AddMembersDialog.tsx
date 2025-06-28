@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { UserAutocomplete } from "@/components/user/UserAutocomplete";
+import { UserSelectComponent } from "@/components/user/UserSelectComponent";
 import { AddMembersDialogProps } from "@/types/chat";
 
-export function AddMembersDialog({ isOpen, onClose, onAdd }: AddMembersDialogProps) {
+export function AddMembersDialog({
+  isOpen,
+  onClose,
+  onAdd,
+}: AddMembersDialogProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
+  // Reset selected users when dialog is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedUsers([]);
+    }
+  }, [isOpen]);
 
   const handleSubmit = () => {
     onAdd(selectedUsers);
@@ -19,26 +31,38 @@ export function AddMembersDialog({ isOpen, onClose, onAdd }: AddMembersDialogPro
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add Members</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <UserAutocomplete
-            selectedUsers={selectedUsers}
-            onSelect={setSelectedUsers}
+
+        <div className="py-4">
+          <UserSelectComponent
+            onSelectionChange={setSelectedUsers}
             placeholder="Search users by email or username"
           />
+        </div>
+
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button
-            className="w-full"
             onClick={handleSubmit}
             disabled={selectedUsers.length === 0}
+            className="min-w-[100px]"
           >
-            Add Selected Members
+            Add {selectedUsers.length} Member
+            {selectedUsers.length !== 1 ? "s" : ""}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-} 
+}

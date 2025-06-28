@@ -5,12 +5,10 @@ import {
   push,
   onValue,
   off,
-  serverTimestamp,
   query,
   orderByChild,
   limitToLast,
   get,
-  startAt,
   endBefore,
 } from "firebase/database";
 import { Message, FileAttachment } from "@/types/chat";
@@ -40,34 +38,39 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
             id,
             ...data,
           }))
-          .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
+          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
         if (messagesList.length > 0) {
-          messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+          messagesList.forEach((msg) =>
+            loadedMessageIdsRef.current.add(msg.id)
+          );
 
-          setMessages(prev => {
-            const prevMap = new Map(prev.map(m => [m.id, m]));
-            messagesList.forEach(msg => prevMap.set(msg.id, msg));
-            return Array.from(prevMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+          setMessages((prev) => {
+            const prevMap = new Map(prev.map((m) => [m.id, m]));
+            messagesList.forEach((msg) => prevMap.set(msg.id, msg));
+            return Array.from(prevMap.values()).sort(
+              (a, b) => a.timestamp - b.timestamp
+            );
           });
 
           if (!initialLoadDoneRef.current && messagesList.length > 0) {
             oldestMessageTimestampRef.current = messagesList[0].timestamp;
           }
         }
-        
-        if (!initialLoadDoneRef.current) {
-            setHasMoreMessages(Object.keys(messagesData).length >= MESSAGES_PER_PAGE);
-        }
 
+        if (!initialLoadDoneRef.current) {
+          setHasMoreMessages(
+            Object.keys(messagesData).length >= MESSAGES_PER_PAGE
+          );
+        }
       } else {
         if (!initialLoadDoneRef.current) {
-            setMessages([]);
-            setHasMoreMessages(false);
+          setMessages([]);
+          setHasMoreMessages(false);
         }
       }
-      
+
       // Ensure isLoading is set to false and initialLoadDoneRef to true AFTER the first data handling
       if (!initialLoadDoneRef.current) {
         setIsLoading(false);
@@ -81,7 +84,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     setHasMoreMessages(true);
     loadedMessageIdsRef.current.clear();
     oldestMessageTimestampRef.current = null;
-    initialLoadDoneRef.current = false; 
+    initialLoadDoneRef.current = false;
     messagesRef.current = ref(db, `directMessages/${chatId}`); // Update messagesRef when chatId changes
 
     const messagesQuery = query(
@@ -100,7 +103,14 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
 
   // Function to load older messages
   const loadMoreMessages = async () => {
-    if (!user || isLoadingMore || !hasMoreMessages || !oldestMessageTimestampRef.current || !initialLoadDoneRef.current) return;
+    if (
+      !user ||
+      isLoadingMore ||
+      !hasMoreMessages ||
+      !oldestMessageTimestampRef.current ||
+      !initialLoadDoneRef.current
+    )
+      return;
 
     setIsLoadingMore(true);
 
@@ -113,7 +123,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
       );
 
       const snapshot = await get(olderMessagesQuery);
-      
+
       if (snapshot.exists()) {
         const messagesData = snapshot.val();
         const messagesList = Object.entries(messagesData)
@@ -121,17 +131,19 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
             id,
             ...data,
           }))
-          .filter(msg => !loadedMessageIdsRef.current.has(msg.id))
+          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
         // Update loaded message IDs
-        messagesList.forEach(msg => loadedMessageIdsRef.current.add(msg.id));
+        messagesList.forEach((msg) => loadedMessageIdsRef.current.add(msg.id));
 
         if (messagesList.length > 0) {
           oldestMessageTimestampRef.current = messagesList[0].timestamp;
-          setMessages(prev => {
-            const existingIds = new Set(prev.map(m => m.id));
-            const uniqueNewMessages = messagesList.filter(m => !existingIds.has(m.id));
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const uniqueNewMessages = messagesList.filter(
+              (m) => !existingIds.has(m.id)
+            );
             const combined = [...uniqueNewMessages, ...prev];
             return combined.sort((a, b) => a.timestamp - b.timestamp);
           });
@@ -157,30 +169,40 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
         text: newMessage,
         timestamp: Date.now(),
         senderId: user.uid,
-        senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
+        senderName:
+          user.displayName || user.email?.split("@")[0] || "Unknown User",
         type: "text" as const,
       };
       const msgRef = await push(messagesRef.current, messageData);
       // Notify backend for unread/notification logic
       try {
         const token = await user.getIdToken();
-        let lastMessagePreview = '';
-        if (messageData.type === 'text') {
+        let lastMessagePreview = "";
+        if (messageData.type === "text") {
           lastMessagePreview = messageData.text;
-        } else if (messageData.type === 'image') {
-          lastMessagePreview = '[Image]';
-        } else if (messageData.type === 'file') {
-          lastMessagePreview = '[File]';
+        } else if (messageData.type === "image") {
+          lastMessagePreview = "[Image]";
+        } else if (messageData.type === "file") {
+          lastMessagePreview = "[File]";
         }
-        await fetch(`http://localhost:3000/api/chats/${chatId}/notify-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
-        });
-      } catch (e) { /* ignore notify errors */ }
+        await fetch(
+          `http://localhost:3000/api/chats/${chatId}/notify-message`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              messageId: msgRef.key,
+              timestamp: messageData.timestamp,
+              lastMessage: lastMessagePreview,
+            }),
+          }
+        );
+      } catch (e) {
+        /* ignore notify errors */
+      }
       return true;
     } catch (error) {
       console.error("Error sending message:", error);
@@ -196,31 +218,41 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
         text: "",
         timestamp: Date.now(),
         senderId: user.uid,
-        senderName: user.displayName || user.email?.split("@")[0] || "Unknown User",
-        type: file.isImage ? "image" : "file" as const,
+        senderName:
+          user.displayName || user.email?.split("@")[0] || "Unknown User",
+        type: file.isImage ? "image" : ("file" as const),
         fileAttachment: file,
       };
       const msgRef = await push(messagesRef.current, messageData);
       // Notify backend for unread/notification logic
       try {
         const token = await user.getIdToken();
-        let lastMessagePreview = '';
-        if (messageData.type === 'text') {
+        let lastMessagePreview = "";
+        if (messageData.type === "text") {
           lastMessagePreview = messageData.text;
-        } else if (messageData.type === 'image') {
-          lastMessagePreview = '[Image]';
-        } else if (messageData.type === 'file') {
-          lastMessagePreview = '[File]';
+        } else if (messageData.type === "image") {
+          lastMessagePreview = "[Image]";
+        } else if (messageData.type === "file") {
+          lastMessagePreview = "[File]";
         }
-        await fetch(`http://localhost:3000/api/chats/${chatId}/notify-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ messageId: msgRef.key, timestamp: messageData.timestamp, lastMessage: lastMessagePreview }),
-        });
-      } catch (e) { /* ignore notify errors */ }
+        await fetch(
+          `http://localhost:3000/api/chats/${chatId}/notify-message`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              messageId: msgRef.key,
+              timestamp: messageData.timestamp,
+              lastMessage: lastMessagePreview,
+            }),
+          }
+        );
+      } catch (e) {
+        /* ignore notify errors */
+      }
       return true;
     } catch (error) {
       console.error("Error sending file message:", error);
@@ -235,7 +267,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     try {
       // Optimistically remove from local state
       const originalMessages = messages;
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
       loadedMessageIdsRef.current.delete(messageId);
 
       const token = await user.getIdToken();
@@ -255,7 +287,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
         // Revert optimistic update on failure
         setMessages(originalMessages);
         loadedMessageIdsRef.current.add(messageId);
-        
+
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete message");
       }
@@ -264,7 +296,9 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
       return true;
     } catch (error) {
       console.error("Error deleting message:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete message");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete message"
+      );
       return false;
     }
   };
@@ -280,4 +314,4 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     loadMoreMessages,
     initialLoadDone: initialLoadDoneRef.current,
   };
-}; 
+};

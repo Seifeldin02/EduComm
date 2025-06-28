@@ -20,12 +20,11 @@ import {
   Target,
 } from "react-feather";
 import { jsPDF } from "jspdf";
+// @ts-ignore
+import autoTable from "jspdf-autotable";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// @ts-ignore - Import autotable plugin
-import "jspdf-autotable";
 
 // Extend jsPDF with autoTable property
 declare module "jspdf" {
@@ -33,7 +32,7 @@ declare module "jspdf" {
     lastAutoTable: {
       finalY: number;
     };
-    autoTable: any;
+    autoTable: typeof autoTable;
   }
 }
 
