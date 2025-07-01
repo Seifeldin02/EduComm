@@ -51,6 +51,7 @@ const LoginPage = () => {
       const token = await userCredential.user.getIdToken();
 
       // Verify role
+      console.log("Verifying role for student login...");
       const verifyRes = await fetch(
         "http://localhost:3000/api/users/verify-role",
         {
@@ -63,15 +64,25 @@ const LoginPage = () => {
         }
       );
 
+      console.log("Role verification response status:", verifyRes.status);
+
       if (!verifyRes.ok) {
-        const data = await verifyRes.json();
+        let errorMessage = "Role verification failed";
+        try {
+          const data = await verifyRes.json();
+          console.log("Role verification error data:", data);
+          errorMessage = data.message || errorMessage;
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+        }
         // Sign out the user if role verification fails
         await auth.signOut();
-        throw new Error(data.message || "Role verification failed");
+        throw new Error(errorMessage);
       }
 
       // Extract data from response
       const { role } = await verifyRes.json();
+      console.log("User role from backend:", role);
 
       // Double-check role matches
       if (role.toLowerCase() !== "student") {
@@ -84,7 +95,7 @@ const LoginPage = () => {
       useAuthStore.getState().setRole(role);
 
       toast.success("Login successful!");
-      navigate("/dashboard/student");
+      navigate("/student/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
       toast.error(err.message || "Failed to login");
