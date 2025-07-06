@@ -17,21 +17,10 @@ import {
   BarChart,
   ArrowLeft,
 } from "react-feather";
-import { jsPDF } from "jspdf";
+import { createPDFWithAutoTable } from "@/utils/pdfUtils";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// Import autoTable plugin at module level
-import "jspdf-autotable";
-
-// Extend the jsPDF type to include autoTable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => void;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 interface StudentActivityStats {
   assignmentsAssigned: number;
@@ -288,18 +277,7 @@ export default function StudentReportActivityPage() {
   };
   const generatePDF = async () => {
     try {
-      const doc = new jsPDF() as any;
-      
-      // Check if autoTable is available and log for debugging
-      console.log("jsPDF instance:", doc);
-      console.log("autoTable method exists:", !!doc.autoTable);
-      console.log("autoTable type:", typeof doc.autoTable);
-      
-      if (!doc.autoTable) {
-        console.error("autoTable method not found on jsPDF instance");
-        toast.error("PDF generation failed - autoTable plugin not loaded");
-        return;
-      }
+      const doc = createPDFWithAutoTable();
 
       // Header
       doc.setFontSize(20);

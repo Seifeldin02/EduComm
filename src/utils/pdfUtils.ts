@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 // Type declaration for autoTable
 interface AutoTableOptions {
@@ -13,20 +13,20 @@ interface AutoTableOptions {
 // Extend jsPDF type to include autoTable
 declare module "jspdf" {
   interface jsPDF {
-    autoTable: (options: any) => void;
+    autoTable: (options: AutoTableOptions) => void;
     lastAutoTable: { finalY: number };
   }
 }
 
 // Helper function to create a jsPDF instance with autoTable
 export const createPDFWithAutoTable = (): jsPDF => {
-  const doc = new jsPDF() as any;
-
-  // Verify autoTable is available
-  if (!doc.autoTable) {
-    throw new Error("autoTable plugin not available");
-  }
-
+  const doc = new jsPDF();
+  
+  // Manually attach autoTable to the instance with proper context
+  (doc as any).autoTable = (options: any) => {
+    return autoTable(doc, options);
+  };
+  
   return doc;
 };
 

@@ -19,21 +19,10 @@ import {
   Calendar,
   Target,
 } from "react-feather";
-import { jsPDF } from "jspdf";
+import { createPDFWithAutoTable } from "@/utils/pdfUtils";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// Import autoTable plugin at module level
-import "jspdf-autotable";
-
-// Extend the jsPDF type to include autoTable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => void;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 interface LecturerActivityStats {
   coursesCreated: number;
@@ -322,7 +311,7 @@ export default function LecturerReportActivityPage() {
   };
   const generatePDF = async () => {
     try {
-      const doc = new jsPDF() as any;
+      const doc = createPDFWithAutoTable();
 
       // Header
       doc.setFontSize(20);
