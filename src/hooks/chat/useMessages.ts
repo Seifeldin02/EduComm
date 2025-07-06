@@ -39,40 +39,25 @@ export const useMessages = (groupId: string, user: any | null) => {
     const handleNewMessages = (snapshot: any) => {
       if (snapshot.exists()) {
         const messagesData = snapshot.val();
-        const messagesList = Object.entries(messagesData)
+        const allMessages = Object.entries(messagesData)
           .map(([id, data]: [string, any]) => ({
             id,
             ...data,
           }))
-          // Filter out messages already processed by ID to prevent duplicates
-          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
-        if (messagesList.length > 0) {
-          // Add new message IDs to the loaded set
-          messagesList.forEach((msg) =>
-            loadedMessageIdsRef.current.add(msg.id)
-          );
+        // Always sync with Firebase snapshot to handle both additions and deletions
+        setMessages(allMessages);
 
-          setMessages((prev) => {
-            // Create a map of existing messages for quick lookup
-            const prevMap = new Map(prev.map((m) => [m.id, m]));
-            // Add new messages, replacing if ID exists, then sort
-            messagesList.forEach((msg) => prevMap.set(msg.id, msg));
-            return Array.from(prevMap.values()).sort(
-              (a, b) => a.timestamp - b.timestamp
-            );
-          });
+        // Update loaded message IDs to reflect current state
+        loadedMessageIdsRef.current = new Set(allMessages.map((msg) => msg.id));
 
-          // Only update oldestMessageTimestampRef on the VERY FIRST load from this listener
-          if (!initialLoadDoneRef.current && messagesList.length > 0) {
-            oldestMessageTimestampRef.current = messagesList[0].timestamp;
-          }
+        // Only update oldestMessageTimestampRef on the VERY FIRST load from this listener
+        if (!initialLoadDoneRef.current && allMessages.length > 0) {
+          oldestMessageTimestampRef.current = allMessages[0].timestamp;
         }
+
         // Determine hasMoreMessages based on whether the fetched chunk was full
-        // This should ideally be checked against the limitToLast value (MESSAGES_PER_PAGE)
-        // If onValue is for NEW messages, this check might be misleading.
-        // It's more reliable in loadMoreMessages. For initial load:
         if (!initialLoadDoneRef.current) {
           setHasMoreMessages(
             Object.keys(messagesData).length >= MESSAGES_PER_PAGE
@@ -80,11 +65,9 @@ export const useMessages = (groupId: string, user: any | null) => {
         }
       } else {
         // No messages initially, or all messages were deleted
-        if (!initialLoadDoneRef.current) {
-          // Only clear if it's an initial load scenario
-          setMessages([]);
-          setHasMoreMessages(false);
-        }
+        setMessages([]);
+        setHasMoreMessages(false);
+        loadedMessageIdsRef.current.clear();
       }
 
       if (!initialLoadDoneRef.current) {
@@ -268,11 +251,9 @@ export const useMessages = (groupId: string, user: any | null) => {
     if (!user) return false;
 
     try {
-      // Optimistically remove from local state
-      const originalMessages = messages;
-      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-      loadedMessageIdsRef.current.delete(messageId);
-
+      console.log(
+        `Attempting to delete message ${messageId} from group ${groupId}`
+      );
       const token = await user.getIdToken();
       const response = await fetch(
         `http://localhost:3000/api/groups/${groupId}/messages/${messageId}`,
@@ -285,15 +266,15 @@ export const useMessages = (groupId: string, user: any | null) => {
         }
       );
 
-      if (!response.ok) {
-        // Revert optimistic update on failure
-        setMessages(originalMessages);
-        loadedMessageIdsRef.current.add(messageId);
+      console.log(`Delete response status: ${response.status}`);
 
+      if (!response.ok) {
         const errorData = await response.json();
+        console.error(`Delete failed with error:`, errorData);
         throw new Error(errorData.error || "Failed to delete message");
       }
 
+      console.log("Message deleted successfully");
       toast.success("Message deleted");
       return true;
     } catch (error) {

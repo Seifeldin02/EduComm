@@ -416,12 +416,6 @@ export default function CourseManagePage() {
                               <p className="text-sm text-gray-500">
                                 {student.email}
                               </p>
-                              <p className="text-xs text-gray-400">
-                                Enrolled{" "}
-                                {new Date(
-                                  student.enrolledAt
-                                ).toLocaleDateString()}
-                              </p>
                             </div>
                           </div>
                           <Button

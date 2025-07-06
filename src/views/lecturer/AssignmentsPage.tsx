@@ -300,14 +300,6 @@ export default function LecturerAssignmentsPage() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === "grouped" ? "default" : "outline"}
-                onClick={() => setViewMode("grouped")}
-                size="sm"
-              >
-                <BookOpen size={16} className="mr-2" />
-                By Course
-              </Button>
-              <Button
                 variant={viewMode === "all" ? "default" : "outline"}
                 onClick={() => setViewMode("all")}
                 size="sm"

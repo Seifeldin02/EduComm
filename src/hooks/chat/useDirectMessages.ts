@@ -33,30 +33,21 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     const handleNewMessages = (snapshot: any) => {
       if (snapshot.exists()) {
         const messagesData = snapshot.val();
-        const messagesList = Object.entries(messagesData)
+        const allMessages = Object.entries(messagesData)
           .map(([id, data]: [string, any]) => ({
             id,
             ...data,
           }))
-          .filter((msg) => !loadedMessageIdsRef.current.has(msg.id))
           .sort((a, b) => a.timestamp - b.timestamp);
 
-        if (messagesList.length > 0) {
-          messagesList.forEach((msg) =>
-            loadedMessageIdsRef.current.add(msg.id)
-          );
+        // Always sync with Firebase snapshot to handle both additions and deletions
+        setMessages(allMessages);
 
-          setMessages((prev) => {
-            const prevMap = new Map(prev.map((m) => [m.id, m]));
-            messagesList.forEach((msg) => prevMap.set(msg.id, msg));
-            return Array.from(prevMap.values()).sort(
-              (a, b) => a.timestamp - b.timestamp
-            );
-          });
+        // Update loaded message IDs to reflect current state
+        loadedMessageIdsRef.current = new Set(allMessages.map((msg) => msg.id));
 
-          if (!initialLoadDoneRef.current && messagesList.length > 0) {
-            oldestMessageTimestampRef.current = messagesList[0].timestamp;
-          }
+        if (!initialLoadDoneRef.current && allMessages.length > 0) {
+          oldestMessageTimestampRef.current = allMessages[0].timestamp;
         }
 
         if (!initialLoadDoneRef.current) {
@@ -65,10 +56,9 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
           );
         }
       } else {
-        if (!initialLoadDoneRef.current) {
-          setMessages([]);
-          setHasMoreMessages(false);
-        }
+        setMessages([]);
+        setHasMoreMessages(false);
+        loadedMessageIdsRef.current.clear();
       }
 
       // Ensure isLoading is set to false and initialLoadDoneRef to true AFTER the first data handling
@@ -265,11 +255,9 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
     if (!user || !chatId) return false;
 
     try {
-      // Optimistically remove from local state
-      const originalMessages = messages;
-      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-      loadedMessageIdsRef.current.delete(messageId);
-
+      console.log(
+        `Attempting to delete message ${messageId} from chat ${chatId}`
+      );
       const token = await user.getIdToken();
       const response = await fetch(
         `http://localhost:3000/api/messages/${messageId}`,
@@ -283,15 +271,15 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
         }
       );
 
-      if (!response.ok) {
-        // Revert optimistic update on failure
-        setMessages(originalMessages);
-        loadedMessageIdsRef.current.add(messageId);
+      console.log(`Delete response status: ${response.status}`);
 
+      if (!response.ok) {
         const errorData = await response.json();
+        console.error(`Delete failed with error:`, errorData);
         throw new Error(errorData.error || "Failed to delete message");
       }
 
+      console.log("Message deleted successfully");
       toast.success("Message deleted");
       return true;
     } catch (error) {

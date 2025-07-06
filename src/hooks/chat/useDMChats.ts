@@ -105,16 +105,27 @@ export const useDMChats = (user: any | null) => {
 
     if (userChatsSnapshot.exists()) {
       const userChats = userChatsSnapshot.val();
-      const existingChatId = Object.keys(userChats).find((chatId) => {
-        const chat = userChats[chatId];
-        return (
-          chat.participants &&
-          Object.keys(chat.participants).includes(otherUser.uid)
-        );
-      });
 
-      if (existingChatId) {
-        return existingChatId;
+      // Check each chat to see if it's a DM with the other user
+      for (const chatId of Object.keys(userChats)) {
+        const chatRef = ref(db, `chats/${chatId}`);
+        const chatSnapshot = await get(chatRef);
+
+        if (chatSnapshot.exists()) {
+          const chatData = chatSnapshot.val();
+          const participants = chatData.participants;
+
+          // Check if this is a DM (exactly 2 participants) with the other user
+          if (
+            participants &&
+            Object.keys(participants).length === 2 &&
+            participants[user.uid] &&
+            participants[otherUser.uid]
+          ) {
+            console.log("Existing chat found:", chatId);
+            return chatId;
+          }
+        }
       }
     }
 

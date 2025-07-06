@@ -53,57 +53,67 @@ export default function DirectMessages() {
   useEffect(() => {
     const markDMNotificationsAsRead = async () => {
       if (!user || !selectedChatId || messages.length === 0) return;
-      // Mark notifications as read in Firestore
-      const q = query(
-        collection(firestore, `notifications/${user.uid}/items`),
-        where("type", "==", "direct_message"),
-        where("chatId", "==", selectedChatId),
-        where("read", "==", false)
-      );
-      const snapshot = await getDocs(q);
-      for (const notifDoc of snapshot.docs) {
-        await updateDoc(
-          doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`),
-          { read: true }
-        );
-      }
-      // Update lastRead in backend
+
       try {
-        const token = await user.getIdToken();
-        await fetch(`http://localhost:3000/api/chats/${selectedChatId}/read`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } catch (e) {
-        /* ignore errors */
+        const notificationsQuery = query(
+          collection(firestore, "notifications"),
+          where("recipientId", "==", user.uid),
+          where("read", "==", false),
+          where("type", "==", "message"),
+          where("metadata.chatId", "==", selectedChatId)
+        );
+
+        const querySnapshot = await getDocs(notificationsQuery);
+
+        const updatePromises = querySnapshot.docs.map((docSnapshot) =>
+          updateDoc(doc(firestore, "notifications", docSnapshot.id), {
+            read: true,
+          })
+        );
+
+        await Promise.all(updatePromises);
+      } catch (error) {
+        console.error("Error marking notifications as read:", error);
       }
     };
+
     markDMNotificationsAsRead();
-  }, [selectedChatId, user, messages.length]);
+  }, [user, selectedChatId, messages]);
 
   const handleStartChat = async (selectedUser: any) => {
+    if (!user) {
+      toast.error("Please log in to start a chat");
+      return;
+    }
+
     try {
-      console.log("DirectMessages - Selected user:", selectedUser);
-
-      // Handle case where UserAutocomplete returns an array (shouldn't happen now, but safety check)
-      if (Array.isArray(selectedUser)) {
-        toast.error("Multiple user selection not supported here");
+      // Validate selected user
+      if (!selectedUser || typeof selectedUser !== "object") {
+        console.error("Invalid selected user:", selectedUser);
+        toast.error("Invalid user selected");
         return;
       }
 
-      // Validate selectedUser object
-      if (!selectedUser || !selectedUser.uid) {
-        toast.error("User information is incomplete");
+      if (!selectedUser.uid) {
+        console.error("Selected user missing UID:", selectedUser);
+        toast.error("Cannot start chat - user information is incomplete");
         return;
       }
 
+      console.log("Starting chat with user:", selectedUser);
       const chatId = await createOrGetChat(selectedUser);
       if (chatId) {
+        console.log("Chat created/found:", chatId);
         setSelectedChatId(chatId);
         setShowNewChat(false);
+
+        // Check if this is an existing chat or new one
+        const existingChat = chats.find((chat) => chat.id === chatId);
+        if (existingChat) {
+          toast.success("Redirected to existing conversation");
+        } else {
+          toast.success("Chat started successfully!");
+        }
       }
     } catch (error) {
       console.error("Error starting chat:", error);
@@ -125,18 +135,23 @@ export default function DirectMessages() {
   };
 
   return (
-    <div className="flex h-[82vh]">
+    <div className="flex h-[70vh] max-h-[70vh]">
       {/* Chats Sidebar */}
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <Button onClick={() => setShowNewChat(true)} className="w-full">
+        <div className="p-4 border-b border-gray-200 flex-shrink-0">
+          <Button
+            onClick={() => {
+              setSelectedChatId(null);
+              setShowNewChat(true);
+            }}
+            className="w-full"
+          >
             <MessageCircle className="w-4 h-4 mr-2" />
             New Message
           </Button>
         </div>
-
         {/* Chats List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {chatsLoading ? (
             <div className="p-4 text-center text-gray-500">
               Loading chats...
@@ -148,101 +163,85 @@ export default function DirectMessages() {
           ) : (
             chats.map((chat) => {
               const otherParticipant = getOtherParticipant(chat);
-              if (!otherParticipant) return null;
-
               return (
-                <button
+                <div
                   key={chat.id}
-                  onClick={() => setSelectedChatId(chat.id)}
-                  className={`w-full p-4 text-left hover:bg-gray-50 flex items-center space-x-3 ${
-                    selectedChatId === chat.id ? "bg-blue-50" : ""
+                  onClick={() => {
+                    setSelectedChatId(chat.id);
+                    setShowNewChat(false);
+                  }}
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                    selectedChatId === chat.id
+                      ? "bg-blue-50 border-blue-200"
+                      : ""
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    {otherParticipant.photoURL ? (
-                      <img
-                        src={otherParticipant.photoURL}
-                        alt={otherParticipant.displayName}
-                        className="w-full h-full rounded-full"
-                      />
-                    ) : (
-                      <span className="text-lg font-medium text-gray-600">
-                        {otherParticipant.displayName[0]}
-                      </span>
-                    )}
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3 flex-shrink-0">
+                      {otherParticipant?.displayName?.[0] ||
+                        otherParticipant?.email?.[0] ||
+                        "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">
+                        {otherParticipant?.displayName ||
+                          otherParticipant?.email ||
+                          "Unknown User"}
+                      </div>
+                      {chat.lastMessage && (
+                        <div className="text-sm text-gray-500 truncate">
+                          {chat.lastMessage.text}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {otherParticipant.displayName}
-                    </p>
-                    {chat.lastMessage && (
-                      <p className="text-sm text-gray-500 truncate">
-                        {chat.lastMessage.text}
-                      </p>
-                    )}
-                  </div>
-                </button>
+                </div>
               );
             })
           )}
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-gray-50 min-w-0">
         {selectedChatId ? (
           <>
             {/* Chat Header */}
-            <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4">
-              {chats.find((c) => c.id === selectedChatId) && (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    {getOtherParticipant(
-                      chats.find((c) => c.id === selectedChatId)
-                    )?.photoURL ? (
-                      <img
-                        src={
-                          getOtherParticipant(
-                            chats.find((c) => c.id === selectedChatId)
-                          )?.photoURL
-                        }
-                        alt={
-                          getOtherParticipant(
-                            chats.find((c) => c.id === selectedChatId)
-                          )?.displayName
-                        }
-                        className="w-full h-full rounded-full"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium text-gray-600">
-                        {
-                          getOtherParticipant(
-                            chats.find((c) => c.id === selectedChatId)
-                          )?.displayName[0]
-                        }
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="font-medium">
-                    {
-                      getOtherParticipant(
-                        chats.find((c) => c.id === selectedChatId)
-                      )?.displayName
-                    }
-                  </h2>
+            <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4 flex-shrink-0">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                  {(() => {
+                    const chat = chats.find((c) => c.id === selectedChatId);
+                    const otherParticipant = getOtherParticipant(chat);
+                    return (
+                      otherParticipant?.displayName?.[0] ||
+                      otherParticipant?.email?.[0] ||
+                      "?"
+                    );
+                  })()}
                 </div>
-              )}
-              <div className="flex items-center space-x-2 bg-gray-50 rounded-md px-2 py-1">
-                <Globe className="w-4 h-4 text-gray-500" />
+                <h2 className="font-medium">
+                  {(() => {
+                    const chat = chats.find((c) => c.id === selectedChatId);
+                    const otherParticipant = getOtherParticipant(chat);
+                    return (
+                      otherParticipant?.displayName ||
+                      otherParticipant?.email ||
+                      "Unknown User"
+                    );
+                  })()}
+                </h2>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Globe className="w-4 h-4 text-gray-400" />
                 <Select
                   value={selectedLanguage}
                   onValueChange={setSelectedLanguage}
                 >
-                  <SelectTrigger className="w-[140px] border-none bg-transparent focus:ring-0">
-                    <SelectValue placeholder="Translate" />
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
                     {TRANSLATION_LANGUAGES.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code}>
                         {lang.name}
@@ -255,6 +254,7 @@ export default function DirectMessages() {
 
             {/* Messages Area */}
             <MessagesArea
+              key={selectedChatId} // Force remount when chat changes
               messages={messages}
               isLoading={messagesLoading}
               isLoadingMore={isLoadingMore}
@@ -276,7 +276,7 @@ export default function DirectMessages() {
         ) : showNewChat ? (
           <AnimationWrapper>
             <div className="h-full flex flex-col">
-              <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4">
+              <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4 flex-shrink-0">
                 <h2 className="font-medium">New Message</h2>
                 <Button
                   variant="ghost"

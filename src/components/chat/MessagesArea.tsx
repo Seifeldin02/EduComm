@@ -24,9 +24,21 @@ const formatMessageDate = (timestamp: number) => {
   yesterday.setDate(yesterday.getDate() - 1);
 
   // Reset hours to compare just the dates
-  const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const yesterdayDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+  const messageDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  const todayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const yesterdayDate = new Date(
+    yesterday.getFullYear(),
+    yesterday.getMonth(),
+    yesterday.getDate()
+  );
 
   if (messageDate.getTime() === todayDate.getTime()) {
     return "Today";
@@ -34,10 +46,10 @@ const formatMessageDate = (timestamp: number) => {
     return "Yesterday";
   } else {
     return date.toLocaleDateString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   }
 };
@@ -45,8 +57,8 @@ const formatMessageDate = (timestamp: number) => {
 // Group messages by date
 const groupMessagesByDate = (messages: MessageType[]) => {
   const groups: { [date: string]: MessageType[] } = {};
-  
-  messages.forEach(message => {
+
+  messages.forEach((message) => {
     const date = formatMessageDate(message.timestamp);
     if (!groups[date]) {
       groups[date] = [];
@@ -98,7 +110,9 @@ export function MessagesArea({
 
     const lastMessage = messages[messages.length - 1];
     const isOwnMessage = lastMessage.senderId === currentUserId;
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
 
     if (isOwnMessage || isNearBottom) {
       shouldScrollToBottomRef.current = true;
@@ -108,7 +122,8 @@ export function MessagesArea({
   // Handle scroll and load more messages
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
-    if (!container || isLoadingMore || !hasMoreMessages || !initialLoadDone) return;
+    if (!container || isLoadingMore || !hasMoreMessages || !initialLoadDone)
+      return;
 
     const scrollTop = container.scrollTop;
     const isNearTop = scrollTop < 100;
@@ -123,8 +138,8 @@ export function MessagesArea({
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="flex-1 overflow-y-auto bg-gray-50 px-4"
       onScroll={handleScroll}
     >
@@ -144,7 +159,8 @@ export function MessagesArea({
                     onClick={() => {
                       if (containerRef.current) {
                         isNearTopRef.current = true;
-                        prevScrollHeightRef.current = containerRef.current.scrollHeight;
+                        prevScrollHeightRef.current =
+                          containerRef.current.scrollHeight;
                       }
                       onLoadMore();
                     }}
@@ -183,4 +199,3 @@ export function MessagesArea({
     </div>
   );
 }
- 

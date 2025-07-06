@@ -21,12 +21,12 @@ declare module "jspdf" {
 // Helper function to create a jsPDF instance with autoTable
 export const createPDFWithAutoTable = (): jsPDF => {
   const doc = new jsPDF();
-  
+
   // Manually attach autoTable to the instance with proper context
   (doc as any).autoTable = (options: any) => {
     return autoTable(doc, options);
   };
-  
+
   return doc;
 };
 
