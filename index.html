@@ -2,159 +2,406 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
     <!-- Critical Performance Optimization -->
-    <link rel="preconnect" href="http://localhost:3000" crossorigin>
-    <link rel="dns-prefetch" href="http://localhost:3000">
-    
+    <link rel="preconnect" href="http://localhost:3000" crossorigin />
+    <link rel="dns-prefetch" href="http://localhost:3000" />
+
     <!-- Icons and Favicons - Optimized -->
     <link rel="icon" type="image/svg+xml" href="/EduCommIcon.svg" sizes="any" />
     <link rel="apple-touch-icon" href="/EduCommIcon.svg" sizes="180x180" />
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- SEO Meta Tags -->
     <title>EduComm - Student Login</title>
-    <meta name="description" content="Sign in to EduComm - Access your courses, assignments, and study groups. Educational platform for students and lecturers." />
-    <meta name="keywords" content="student login, education, courses, assignments, educomm" />
+    <meta
+      name="description"
+      content="Sign in to EduComm - Access your courses, assignments, and study groups. Educational platform for students and lecturers."
+    />
+    <meta
+      name="keywords"
+      content="student login, education, courses, assignments, educomm"
+    />
     <meta name="author" content="EduComm" />
     <meta name="robots" content="index, follow" />
-    
+
     <!-- Open Graph Tags -->
     <meta property="og:title" content="EduComm - Student Login" />
-    <meta property="og:description" content="Sign in to access your educational platform" />
+    <meta
+      property="og:description"
+      content="Sign in to access your educational platform"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/EduCommLogo.png" />
-    
+
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="EduComm - Student Login" />
-    <meta name="twitter:description" content="Sign in to access your educational platform" />
-    
+    <meta
+      name="twitter:description"
+      content="Sign in to access your educational platform"
+    />
+
     <!-- Theme and PWA -->
     <meta name="theme-color" content="#10b981" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    
+
     <!-- Critical Resource Hints -->
     <link rel="preload" href="/EduCommLogo.png" as="image" />
     <link rel="modulepreload" href="/src/main.tsx" />
     <link rel="modulepreload" href="/src/App.tsx" />
     <link rel="modulepreload" href="/src/views/auth/student/LoginPage.tsx" />
-    
+
     <!-- Inline Critical CSS - Ultra-Optimized for First Paint -->
     <style>
       /* Minimal reset */
-      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-      html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-      body{background:linear-gradient(135deg,#e0f2fe 0%,#fff 50%,#f0fdf4 100%);color:#374151;overflow-x:hidden}
-      #root{min-height:100vh;position:relative}
-      
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        background: linear-gradient(135deg, #e0f2fe 0%, #fff 50%, #f0fdf4 100%);
+        color: #374151;
+        overflow-x: hidden;
+      }
+      #root {
+        min-height: 100vh;
+        position: relative;
+      }
+
       /* Optimized spinner with smooth animation */
-      .loading-spinner{position:fixed;top:50%;left:50%;width:24px;height:24px;border:2px solid #e5e7eb;border-top:2px solid #10b981;border-radius:50%;transform:translate(-50%,-50%);animation:spin .8s linear infinite;z-index:9999}
-      @keyframes spin{0%{transform:translate(-50%,-50%) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
-      
+      .loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #e5e7eb;
+        border-top: 2px solid #10b981;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: spin 0.8s linear infinite;
+        z-index: 9999;
+      }
+      @keyframes spin {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
       /* Critical login layout with smooth animations */
-      .login-container{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:1rem;position:relative;animation:fadeIn 0.6s ease-out}
-      .login-bg-blob{position:absolute;border-radius:50%;filter:blur(50px);opacity:0.15;pointer-events:none;animation:float 6s ease-in-out infinite}
-      .login-bg-blob:first-child{width:250px;height:250px;background:#3b82f6;top:-80px;left:-80px;animation-delay:0s}
-      .login-bg-blob:last-child{width:200px;height:200px;background:#10b981;bottom:-80px;right:-80px;animation-delay:3s}
-      .login-logo{width:10rem;height:auto;margin-bottom:1.5rem;max-width:100%;animation:slideDown 0.8s ease-out;transition:transform 0.2s ease}
-      .login-logo:hover{transform:scale(1.02)}
-      .login-form{background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08);width:100%;max-width:20rem;position:relative;z-index:1;animation:slideUp 0.8s ease-out;transition:box-shadow 0.3s ease}
-      .login-form:hover{box-shadow:0 8px 32px rgba(0,0,0,0.12)}
-      .login-input{width:100%;padding:12px;margin-bottom:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;transition:all .2s ease;animation:fadeIn 1s ease-out}
-      .login-input:focus{outline:0;border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.1);transform:translateY(-1px)}
-      .login-input:hover:not(:focus){border-color:#9ca3af}
-      .login-button{width:100%;background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff;border:0;padding:14px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s ease;animation:fadeIn 1.2s ease-out;position:relative;overflow:hidden}
-      .login-button:hover:not(:disabled){background:linear-gradient(135deg,#059669 0%,#047857 100%);transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,185,129,0.3)}
-      .login-button:active:not(:disabled){transform:translateY(0);box-shadow:0 2px 6px rgba(16,185,129,0.3)}
-      .login-button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-      .login-title{font-size:24px;font-weight:600;color:#374151;text-align:center;margin-bottom:2rem;animation:slideDown 0.6s ease-out}
-      
+      .login-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        position: relative;
+        animation: fadeIn 0.6s ease-out;
+      }
+      .login-bg-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(50px);
+        opacity: 0.15;
+        pointer-events: none;
+        animation: float 6s ease-in-out infinite;
+      }
+      .login-bg-blob:first-child {
+        width: 250px;
+        height: 250px;
+        background: #3b82f6;
+        top: -80px;
+        left: -80px;
+        animation-delay: 0s;
+      }
+      .login-bg-blob:last-child {
+        width: 200px;
+        height: 200px;
+        background: #10b981;
+        bottom: -80px;
+        right: -80px;
+        animation-delay: 3s;
+      }
+      .login-logo {
+        width: 10rem;
+        height: auto;
+        margin-bottom: 1.5rem;
+        max-width: 100%;
+        animation: slideDown 0.8s ease-out;
+        transition: transform 0.2s ease;
+      }
+      .login-logo:hover {
+        transform: scale(1.02);
+      }
+      .login-form {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 20rem;
+        position: relative;
+        z-index: 1;
+        animation: slideUp 0.8s ease-out;
+        transition: box-shadow 0.3s ease;
+      }
+      .login-form:hover {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      .login-input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        animation: fadeIn 1s ease-out;
+      }
+      .login-input:focus {
+        outline: 0;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        transform: translateY(-1px);
+      }
+      .login-input:hover:not(:focus) {
+        border-color: #9ca3af;
+      }
+      .login-button {
+        width: 100%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border: 0;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        animation: fadeIn 1.2s ease-out;
+        position: relative;
+        overflow: hidden;
+      }
+      .login-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+      .login-button:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+      }
+      .login-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .login-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #374151;
+        text-align: center;
+        margin-bottom: 2rem;
+        animation: slideDown 0.6s ease-out;
+      }
+
       /* Smooth animations */
-      @keyframes fadeIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
-      @keyframes slideDown{0%{opacity:0;transform:translateY(-20px)}100%{opacity:1;transform:translateY(0)}}
-      @keyframes slideUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
-      @keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
-      
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideDown {
+        0% {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
       /* Error message animation */
-      .login-error{animation:shakeIn 0.5s ease-out}
-      @keyframes shakeIn{0%{opacity:0;transform:translateX(-10px)}25%{transform:translateX(5px)}50%{transform:translateX(-3px)}75%{transform:translateX(2px)}100%{opacity:1;transform:translateX(0)}}
-      
+      .login-error {
+        animation: shakeIn 0.5s ease-out;
+      }
+      @keyframes shakeIn {
+        0% {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        25% {
+          transform: translateX(5px);
+        }
+        50% {
+          transform: translateX(-3px);
+        }
+        75% {
+          transform: translateX(2px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
       /* Link hover effects */
-      .login-link{color:#10b981;text-decoration:none;transition:all 0.2s ease;border-radius:4px;padding:2px 4px}
-      .login-link:hover{color:#059669;background:rgba(16,185,129,0.1);transform:translateY(-1px)}
-      
+      .login-link {
+        color: #10b981;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border-radius: 4px;
+        padding: 2px 4px;
+      }
+      .login-link:hover {
+        color: #059669;
+        background: rgba(16, 185, 129, 0.1);
+        transform: translateY(-1px);
+      }
+
       /* Hide spinner when loaded with fade out */
-      .loaded .loading-spinner{animation:fadeOut 0.3s ease-out forwards}
-      @keyframes fadeOut{0%{opacity:1}100%{opacity:0;visibility:hidden}}
-      
+      .loaded .loading-spinner {
+        animation: fadeOut 0.3s ease-out forwards;
+      }
+      @keyframes fadeOut {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+
       /* Reduce motion for accessibility */
-      @media (prefers-reduced-motion:reduce){
-        *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}
-        .login-bg-blob{animation:none}
-        .login-container,.login-logo,.login-form,.login-input,.login-button,.login-title{animation:none}
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+        .login-bg-blob {
+          animation: none;
+        }
+        .login-container,
+        .login-logo,
+        .login-form,
+        .login-input,
+        .login-button,
+        .login-title {
+          animation: none;
+        }
       }
     </style>
   </head>
   <body>
     <!-- Minimal loading indicator -->
     <div class="loading-spinner" aria-label="Loading EduComm"></div>
-    
+
     <!-- Main app container -->
     <div id="root"></div>
-    
+
     <!-- Minimal structured data -->
     <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"WebApplication","name":"EduComm","description":"Educational Communication Platform"}
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EduComm",
+        "description": "Educational Communication Platform"
+      }
     </script>
-    
+
     <!-- Optimized app loading -->
     <script>
       // Preload critical resources
       const preloadImage = new Image();
-      preloadImage.src = '/EduCommLogo.png';
-      
+      preloadImage.src = "/EduCommLogo.png";
+
       // Performance timing
       const perfStart = performance.now();
-      
+
       // Remove loading spinner when DOM is ready
       function hideLoader() {
-        document.body.classList.add('loaded');
+        document.body.classList.add("loaded");
         if (window.performance) {
           const loadTime = performance.now() - perfStart;
-          console.log('App loaded in', Math.round(loadTime), 'ms');
+          console.log("App loaded in", Math.round(loadTime), "ms");
         }
       }
-      
+
       // Hide loader on DOM content loaded
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideLoader);
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", hideLoader);
       } else {
         hideLoader();
       }
-      
+
       // Register service worker for caching
-      if ('serviceWorker' in navigator && location.protocol === 'https:') {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+      if ("serviceWorker" in navigator && location.protocol === "https:") {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
             .then((registration) => {
-              console.log('SW registered:', registration);
+              console.log("SW registered:", registration);
             })
             .catch((error) => {
-              console.log('SW registration failed:', error);
+              console.log("SW registration failed:", error);
             });
         });
       }
     </script>
-    
+
     <!-- Main application script with performance optimization -->
     <script type="module">
       // Lazy load the main application
-      import('/src/main.tsx').catch(err => {
-        console.error('Failed to load app:', err);
-        document.body.innerHTML = '<div style="text-align:center;padding:2rem;font-family:sans-serif"><h1>Unable to load application</h1><p>Please refresh the page or check your connection.</p></div>';
+      import("/src/main.tsx").catch((err) => {
+        console.error("Failed to load app:", err);
+        document.body.innerHTML =
+          '<div style="text-align:center;padding:2rem;font-family:sans-serif"><h1>Unable to load application</h1><p>Please refresh the page or check your connection.</p></div>';
       });
     </script>
   </body>

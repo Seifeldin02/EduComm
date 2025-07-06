@@ -23,13 +23,18 @@ const LoginPage = () => {
 
     try {
       // Get email from backend
+      console.log("Student login - Looking up identifier:", identifier);
       const res = await fetch(
         `http://localhost:3000/api/users/get-email?identifier=${encodeURIComponent(
           identifier
         )}`
       );
 
+      console.log("Student login - Response status:", res.status);
+
       if (!res.ok) {
+        const errorData = await res.json();
+        console.log("Student login - Error response:", errorData);
         throw new Error("User not found");
       }
 

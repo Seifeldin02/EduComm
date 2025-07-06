@@ -2,21 +2,27 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { 
-  Calendar, 
-  Clock, 
-  FileText, 
-  Users, 
+import {
+  Calendar,
+  Clock,
+  FileText,
+  Users,
   Eye,
   Award,
   BookOpen,
   Edit,
   Plus,
   CheckCircle,
-  ChevronRight
+  ChevronRight,
 } from "react-feather";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -41,7 +47,7 @@ interface AssignmentWithCourse extends Assignment {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  visible: { opacity: 1, y: 0 },
 };
 
 const listVariants = {
@@ -49,22 +55,24 @@ const listVariants = {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.1
-    }
+      staggerChildren: 0.1,
+    },
   },
   hidden: {
     opacity: 0,
     transition: {
-      when: "afterChildren"
-    }
-  }
+      when: "afterChildren",
+    },
+  },
 };
 
 export default function LecturerAssignmentsPage() {
   const [assignmentsByCourse, setAssignmentsByCourse] = useState<Course[]>([]);
-  const [allAssignments, setAllAssignments] = useState<AssignmentWithCourse[]>([]);
+  const [allAssignments, setAllAssignments] = useState<AssignmentWithCourse[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grouped' | 'all'>('grouped');
+  const [viewMode, setViewMode] = useState<"grouped" | "all">("grouped");
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
@@ -80,13 +88,16 @@ export default function LecturerAssignmentsPage() {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      
+
       // Fetch all assignments created by the lecturer
-      const assignmentsResponse = await fetch("http://localhost:3000/api/assignments", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const assignmentsResponse = await fetch(
+        "http://localhost:3000/api/assignments",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!assignmentsResponse.ok) {
         throw new Error("Failed to fetch assignments");
@@ -94,7 +105,7 @@ export default function LecturerAssignmentsPage() {
 
       const assignmentsData = await assignmentsResponse.json();
       const assignments = assignmentsData.assignments || [];
-      
+
       // Group assignments by course
       const courseMap = new Map<string, Course>();
       const flatAssignments: AssignmentWithCourse[] = [];
@@ -119,7 +130,9 @@ export default function LecturerAssignmentsPage() {
             const submissionsData = await submissionsResponse.json();
             const submissions = submissionsData.submissions || [];
             submissionCount = submissions.length;
-            gradedCount = submissions.filter((sub: any) => sub.grade !== undefined).length;
+            gradedCount = submissions.filter(
+              (sub: any) => sub.grade !== undefined
+            ).length;
           }
 
           // Create assignment with course info
@@ -129,7 +142,7 @@ export default function LecturerAssignmentsPage() {
             courseCode: assignment.courseCode || assignment.courseId,
             courseId: assignment.courseId,
             submissionCount,
-            gradedCount
+            gradedCount,
           };
 
           flatAssignments.push(assignmentWithCourse);
@@ -142,14 +155,17 @@ export default function LecturerAssignmentsPage() {
               name: assignment.courseName || "Unknown Course",
               code: assignment.courseCode || courseId,
               description: "",
-              assignments: []
+              assignments: [],
             });
           }
-          
+
           courseMap.get(courseId)!.assignments.push(assignment);
         } catch (error) {
-          console.error(`Error fetching submissions for assignment ${assignment.id}:`, error);
-          
+          console.error(
+            `Error fetching submissions for assignment ${assignment.id}:`,
+            error
+          );
+
           // Add assignment without submission stats
           const assignmentWithCourse: AssignmentWithCourse = {
             ...assignment,
@@ -157,7 +173,7 @@ export default function LecturerAssignmentsPage() {
             courseCode: assignment.courseCode || assignment.courseId,
             courseId: assignment.courseId,
             submissionCount: 0,
-            gradedCount: 0
+            gradedCount: 0,
           };
 
           flatAssignments.push(assignmentWithCourse);
@@ -170,10 +186,10 @@ export default function LecturerAssignmentsPage() {
               name: assignment.courseName || "Unknown Course",
               code: assignment.courseCode || courseId,
               description: "",
-              assignments: []
+              assignments: [],
             });
           }
-          
+
           courseMap.get(courseId)!.assignments.push(assignment);
         }
       }
@@ -191,18 +207,18 @@ export default function LecturerAssignmentsPage() {
   const getAssignmentStatusBadge = (assignment: AssignmentWithCourse) => {
     const now = new Date();
     const dueDate = new Date(assignment.dueDate);
-    
+
     if (now > dueDate) {
       return {
-        label: 'Closed',
-        color: 'bg-red-100 text-red-800',
-        icon: Clock
+        label: "Closed",
+        color: "bg-red-100 text-red-800",
+        icon: Clock,
       };
     } else {
       return {
-        label: 'Active',
-        color: 'bg-green-100 text-green-800',
-        icon: CheckCircle
+        label: "Active",
+        color: "bg-green-100 text-green-800",
+        icon: CheckCircle,
       };
     }
   };
@@ -212,20 +228,22 @@ export default function LecturerAssignmentsPage() {
     const due = new Date(dueDate);
     const diffTime = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return `Closed ${Math.abs(diffDays)} days ago`;
     } else if (diffDays === 0) {
-      return 'Due today';
+      return "Due today";
     } else if (diffDays === 1) {
-      return 'Due tomorrow';
+      return "Due tomorrow";
     } else {
       return `Due in ${diffDays} days`;
     }
   };
 
   const handleViewSubmissions = (courseId: string, assignmentId: string) => {
-    navigate(`/lecturer/courses/${courseId}/assignments/${assignmentId}/submissions`);
+    navigate(
+      `/lecturer/courses/${courseId}/assignments/${assignmentId}/submissions`
+    );
   };
 
   const handleCreateAssignment = (courseId: string) => {
@@ -234,15 +252,23 @@ export default function LecturerAssignmentsPage() {
 
   const getTotalStats = () => {
     const totalAssignments = allAssignments.length;
-    const totalSubmissions = allAssignments.reduce((sum, assignment) => sum + assignment.submissionCount, 0);
-    const totalGraded = allAssignments.reduce((sum, assignment) => sum + assignment.gradedCount, 0);
-    const activeAssignments = allAssignments.filter(assignment => new Date() <= new Date(assignment.dueDate)).length;
+    const totalSubmissions = allAssignments.reduce(
+      (sum, assignment) => sum + assignment.submissionCount,
+      0
+    );
+    const totalGraded = allAssignments.reduce(
+      (sum, assignment) => sum + assignment.gradedCount,
+      0
+    );
+    const activeAssignments = allAssignments.filter(
+      (assignment) => new Date() <= new Date(assignment.dueDate)
+    ).length;
 
     return {
       totalAssignments,
       totalSubmissions,
       totalGraded,
-      activeAssignments
+      activeAssignments,
     };
   };
 
@@ -265,23 +291,25 @@ export default function LecturerAssignmentsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Assignments</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                My Assignments
+              </h1>
               <p className="text-gray-600 mt-1">
                 Manage and track all assignments across your courses
               </p>
             </div>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === 'grouped' ? 'default' : 'outline'}
-                onClick={() => setViewMode('grouped')}
+                variant={viewMode === "grouped" ? "default" : "outline"}
+                onClick={() => setViewMode("grouped")}
                 size="sm"
               >
                 <BookOpen size={16} className="mr-2" />
                 By Course
               </Button>
               <Button
-                variant={viewMode === 'all' ? 'default' : 'outline'}
-                onClick={() => setViewMode('all')}
+                variant={viewMode === "all" ? "default" : "outline"}
+                onClick={() => setViewMode("all")}
                 size="sm"
               >
                 <FileText size={16} className="mr-2" />
@@ -302,8 +330,12 @@ export default function LecturerAssignmentsPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Assignments</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalAssignments}</p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Total Assignments
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {stats.totalAssignments}
+                      </p>
                     </div>
                     <FileText className="w-8 h-8 text-blue-500" />
                   </div>
@@ -316,8 +348,12 @@ export default function LecturerAssignmentsPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Active Assignments</p>
-                      <p className="text-2xl font-bold text-green-600">{stats.activeAssignments}</p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Active Assignments
+                      </p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {stats.activeAssignments}
+                      </p>
                     </div>
                     <CheckCircle className="w-8 h-8 text-green-500" />
                   </div>
@@ -330,8 +366,12 @@ export default function LecturerAssignmentsPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Submissions</p>
-                      <p className="text-2xl font-bold text-blue-600">{stats.totalSubmissions}</p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Total Submissions
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {stats.totalSubmissions}
+                      </p>
                     </div>
                     <Users className="w-8 h-8 text-blue-500" />
                   </div>
@@ -344,8 +384,12 @@ export default function LecturerAssignmentsPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Graded</p>
-                      <p className="text-2xl font-bold text-purple-600">{stats.totalGraded}</p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Graded
+                      </p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {stats.totalGraded}
+                      </p>
                     </div>
                     <Award className="w-8 h-8 text-purple-500" />
                   </div>
@@ -355,16 +399,19 @@ export default function LecturerAssignmentsPage() {
           </motion.div>
 
           {/* Assignments Content */}
-          {viewMode === 'grouped' ? (
+          {viewMode === "grouped" ? (
             // Grouped by Course View
             <div className="space-y-6">
               {assignmentsByCourse.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No assignments found
+                    </h3>
                     <p className="text-gray-600 mb-4">
-                      You haven't created any assignments yet. Create your first assignment to get started.
+                      You haven't created any assignments yet. Create your first
+                      assignment to get started.
                     </p>
                   </CardContent>
                 </Card>
@@ -380,7 +427,9 @@ export default function LecturerAssignmentsPage() {
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div>
-                            <CardTitle className="text-xl">{course.name}</CardTitle>
+                            <CardTitle className="text-xl">
+                              {course.name}
+                            </CardTitle>
                             <CardDescription>{course.code}</CardDescription>
                           </div>
                           <Button
@@ -400,10 +449,18 @@ export default function LecturerAssignmentsPage() {
                               courseName: course.name,
                               courseCode: course.code,
                               courseId: course.id,
-                              submissionCount: allAssignments.find(a => a.id === assignment.id)?.submissionCount || 0,
-                              gradedCount: allAssignments.find(a => a.id === assignment.id)?.gradedCount || 0
+                              submissionCount:
+                                allAssignments.find(
+                                  (a) => a.id === assignment.id
+                                )?.submissionCount || 0,
+                              gradedCount:
+                                allAssignments.find(
+                                  (a) => a.id === assignment.id
+                                )?.gradedCount || 0,
                             });
-                            const assignmentData = allAssignments.find(a => a.id === assignment.id);
+                            const assignmentData = allAssignments.find(
+                              (a) => a.id === assignment.id
+                            );
 
                             return (
                               <div
@@ -412,7 +469,9 @@ export default function LecturerAssignmentsPage() {
                               >
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-2">
-                                    <h4 className="font-medium text-gray-900">{assignment.title}</h4>
+                                    <h4 className="font-medium text-gray-900">
+                                      {assignment.title}
+                                    </h4>
                                     <Badge className={status.color}>
                                       <status.icon size={12} className="mr-1" />
                                       {status.label}
@@ -425,7 +484,9 @@ export default function LecturerAssignmentsPage() {
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Users size={14} />
-                                      {assignmentData?.submissionCount || 0} submissions
+                                      {assignmentData?.submissionCount ||
+                                        0}{" "}
+                                      submissions
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Award size={14} />
@@ -441,7 +502,12 @@ export default function LecturerAssignmentsPage() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleViewSubmissions(course.id, assignment.id)}
+                                    onClick={() =>
+                                      handleViewSubmissions(
+                                        course.id,
+                                        assignment.id
+                                      )
+                                    }
                                   >
                                     <Eye size={16} className="mr-2" />
                                     View Submissions
@@ -449,7 +515,11 @@ export default function LecturerAssignmentsPage() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => navigate(`/lecturer/courses/${course.id}/assignments`)}
+                                    onClick={() =>
+                                      navigate(
+                                        `/lecturer/courses/${course.id}/assignments`
+                                      )
+                                    }
                                   >
                                     <ChevronRight size={16} />
                                   </Button>
@@ -476,33 +546,46 @@ export default function LecturerAssignmentsPage() {
                 <Card>
                   <CardContent className="p-8 text-center">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No assignments found
+                    </h3>
                     <p className="text-gray-600 mb-4">
-                      You haven't created any assignments yet. Create your first assignment to get started.
+                      You haven't created any assignments yet. Create your first
+                      assignment to get started.
                     </p>
                   </CardContent>
                 </Card>
               ) : (
                 allAssignments
-                  .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(b.createdAt || "").getTime() -
+                      new Date(a.createdAt || "").getTime()
+                  )
                   .map((assignment) => {
                     const status = getAssignmentStatusBadge(assignment);
 
                     return (
-                      <motion.div key={`${assignment.courseId}-${assignment.id}`} variants={cardVariants}>
+                      <motion.div
+                        key={`${assignment.courseId}-${assignment.id}`}
+                        variants={cardVariants}
+                      >
                         <Card className="hover:shadow-md transition-shadow">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
-                                  <h3 className="text-lg font-medium text-gray-900">{assignment.title}</h3>
+                                  <h3 className="text-lg font-medium text-gray-900">
+                                    {assignment.title}
+                                  </h3>
                                   <Badge className={status.color}>
                                     <status.icon size={12} className="mr-1" />
                                     {status.label}
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-blue-600 mb-2">
-                                  {assignment.courseCode} - {assignment.courseName}
+                                  {assignment.courseCode} -{" "}
+                                  {assignment.courseName}
                                 </p>
                                 <div className="flex items-center gap-6 text-sm text-gray-600">
                                   <div className="flex items-center gap-1">
@@ -527,7 +610,12 @@ export default function LecturerAssignmentsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleViewSubmissions(assignment.courseId, assignment.id)}
+                                  onClick={() =>
+                                    handleViewSubmissions(
+                                      assignment.courseId,
+                                      assignment.id
+                                    )
+                                  }
                                 >
                                   <Eye size={16} className="mr-2" />
                                   View Submissions
@@ -535,7 +623,11 @@ export default function LecturerAssignmentsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => navigate(`/lecturer/courses/${assignment.courseId}/assignments`)}
+                                  onClick={() =>
+                                    navigate(
+                                      `/lecturer/courses/${assignment.courseId}/assignments`
+                                    )
+                                  }
                                 >
                                   <Edit size={16} className="mr-2" />
                                   Manage

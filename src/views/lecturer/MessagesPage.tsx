@@ -17,6 +17,19 @@ export default function MessagesPage() {
 
   const handleStartChat = async (selectedUser: any) => {
     try {
+      console.log("Selected user:", selectedUser);
+      
+      // Handle case where UserAutocomplete returns an array (shouldn't happen now, but safety check)
+      if (Array.isArray(selectedUser)) {
+        toast.error("Multiple user selection not supported here");
+        return;
+      }
+      
+      if (!selectedUser || !selectedUser.uid) {
+        toast.error("User ID is required to start a chat");
+        return;
+      }
+
       const response = await fetch(`http://localhost:3000/api/chats/create`, {
         method: "POST",
         headers: {

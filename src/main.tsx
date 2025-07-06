@@ -26,8 +26,8 @@ root.render(
 );
 
 // Performance logging (remove in production)
-if (process.env.NODE_ENV === 'development') {
-  window.addEventListener('load', () => {
+if (process.env.NODE_ENV === "development") {
+  window.addEventListener("load", () => {
     const loadTime = performance.now() - startTime;
     console.log(`App loaded in ${loadTime.toFixed(2)}ms`);
   });

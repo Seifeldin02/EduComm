@@ -18,8 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TRANSLATION_LANGUAGES } from "@/utils/translation";
-import { firestore } from '@/firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { firestore } from "@/firebase/firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 
 export default function DirectMessages() {
   const { user } = useAuthStore();
@@ -40,7 +47,8 @@ export default function DirectMessages() {
     initialLoadDone,
   } = useDirectMessages(selectedChatId || "", user);
 
-  const { selectedLanguage, setSelectedLanguage, translatedMessages } = useTranslation(messages);
+  const { selectedLanguage, setSelectedLanguage, translatedMessages } =
+    useTranslation(messages);
 
   useEffect(() => {
     const markDMNotificationsAsRead = async () => {
@@ -48,31 +56,50 @@ export default function DirectMessages() {
       // Mark notifications as read in Firestore
       const q = query(
         collection(firestore, `notifications/${user.uid}/items`),
-        where('type', '==', 'direct_message'),
-        where('chatId', '==', selectedChatId),
-        where('read', '==', false)
+        where("type", "==", "direct_message"),
+        where("chatId", "==", selectedChatId),
+        where("read", "==", false)
       );
       const snapshot = await getDocs(q);
       for (const notifDoc of snapshot.docs) {
-        await updateDoc(doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`), { read: true });
+        await updateDoc(
+          doc(firestore, `notifications/${user.uid}/items/${notifDoc.id}`),
+          { read: true }
+        );
       }
       // Update lastRead in backend
       try {
         const token = await user.getIdToken();
         await fetch(`http://localhost:3000/api/chats/${selectedChatId}/read`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
-      } catch (e) { /* ignore errors */ }
+      } catch (e) {
+        /* ignore errors */
+      }
     };
     markDMNotificationsAsRead();
   }, [selectedChatId, user, messages.length]);
 
   const handleStartChat = async (selectedUser: any) => {
     try {
+      console.log("DirectMessages - Selected user:", selectedUser);
+
+      // Handle case where UserAutocomplete returns an array (shouldn't happen now, but safety check)
+      if (Array.isArray(selectedUser)) {
+        toast.error("Multiple user selection not supported here");
+        return;
+      }
+
+      // Validate selectedUser object
+      if (!selectedUser || !selectedUser.uid) {
+        toast.error("User information is incomplete");
+        return;
+      }
+
       const chatId = await createOrGetChat(selectedUser);
       if (chatId) {
         setSelectedChatId(chatId);
@@ -91,7 +118,9 @@ export default function DirectMessages() {
 
   const getOtherParticipant = (chat: any) => {
     if (!user || !chat.participants) return null;
-    const otherParticipantId = Object.keys(chat.participants).find(id => id !== user.uid);
+    const otherParticipantId = Object.keys(chat.participants).find(
+      (id) => id !== user.uid
+    );
     return otherParticipantId ? chat.participants[otherParticipantId] : null;
   };
 
@@ -100,10 +129,7 @@ export default function DirectMessages() {
       {/* Chats Sidebar */}
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b border-gray-200">
-          <Button
-            onClick={() => setShowNewChat(true)}
-            className="w-full"
-          >
+          <Button onClick={() => setShowNewChat(true)} className="w-full">
             <MessageCircle className="w-4 h-4 mr-2" />
             New Message
           </Button>
@@ -112,11 +138,15 @@ export default function DirectMessages() {
         {/* Chats List */}
         <div className="flex-1 overflow-y-auto">
           {chatsLoading ? (
-            <div className="p-4 text-center text-gray-500">Loading chats...</div>
+            <div className="p-4 text-center text-gray-500">
+              Loading chats...
+            </div>
           ) : chats.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">No conversations yet</div>
+            <div className="p-4 text-center text-gray-500">
+              No conversations yet
+            </div>
           ) : (
-            chats.map(chat => {
+            chats.map((chat) => {
               const otherParticipant = getOtherParticipant(chat);
               if (!otherParticipant) return null;
 
@@ -142,7 +172,9 @@ export default function DirectMessages() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{otherParticipant.displayName}</p>
+                    <p className="font-medium truncate">
+                      {otherParticipant.displayName}
+                    </p>
                     {chat.lastMessage && (
                       <p className="text-sm text-gray-500 truncate">
                         {chat.lastMessage.text}
@@ -162,23 +194,41 @@ export default function DirectMessages() {
           <>
             {/* Chat Header */}
             <div className="h-16 min-h-[64px] border-b border-gray-200 bg-white flex items-center justify-between px-4">
-              {chats.find(c => c.id === selectedChatId) && (
+              {chats.find((c) => c.id === selectedChatId) && (
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.photoURL ? (
+                    {getOtherParticipant(
+                      chats.find((c) => c.id === selectedChatId)
+                    )?.photoURL ? (
                       <img
-                        src={getOtherParticipant(chats.find(c => c.id === selectedChatId))?.photoURL}
-                        alt={getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName}
+                        src={
+                          getOtherParticipant(
+                            chats.find((c) => c.id === selectedChatId)
+                          )?.photoURL
+                        }
+                        alt={
+                          getOtherParticipant(
+                            chats.find((c) => c.id === selectedChatId)
+                          )?.displayName
+                        }
                         className="w-full h-full rounded-full"
                       />
                     ) : (
                       <span className="text-sm font-medium text-gray-600">
-                        {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName[0]}
+                        {
+                          getOtherParticipant(
+                            chats.find((c) => c.id === selectedChatId)
+                          )?.displayName[0]
+                        }
                       </span>
                     )}
                   </div>
                   <h2 className="font-medium">
-                    {getOtherParticipant(chats.find(c => c.id === selectedChatId))?.displayName}
+                    {
+                      getOtherParticipant(
+                        chats.find((c) => c.id === selectedChatId)
+                      )?.displayName
+                    }
                   </h2>
                 </div>
               )}
@@ -218,7 +268,10 @@ export default function DirectMessages() {
             />
 
             {/* Chat Input */}
-            <ChatInput onSendMessage={sendMessage} onSendFile={sendFileMessage} />
+            <ChatInput
+              onSendMessage={sendMessage}
+              onSendFile={sendFileMessage}
+            />
           </>
         ) : showNewChat ? (
           <AnimationWrapper>
@@ -254,4 +307,4 @@ export default function DirectMessages() {
       </div>
     </div>
   );
-} 
+}

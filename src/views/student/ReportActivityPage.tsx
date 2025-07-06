@@ -22,16 +22,14 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-// @ts-ignore - Import autotable plugin
+// Import autoTable plugin at module level
 import "jspdf-autotable";
 
-// Extend jsPDF with autoTable property
+// Extend the jsPDF type to include autoTable
 declare module "jspdf" {
   interface jsPDF {
-    lastAutoTable: {
-      finalY: number;
-    };
-    autoTable: any;
+    autoTable: (options: any) => void;
+    lastAutoTable: { finalY: number };
   }
 }
 
@@ -288,115 +286,126 @@ export default function StudentReportActivityPage() {
       setLoading(false);
     }
   };
+  const generatePDF = async () => {
+    try {
+      const doc = new jsPDF() as any;
+      
+      // Check if autoTable is available and log for debugging
+      console.log("jsPDF instance:", doc);
+      console.log("autoTable method exists:", !!doc.autoTable);
+      console.log("autoTable type:", typeof doc.autoTable);
+      
+      if (!doc.autoTable) {
+        console.error("autoTable method not found on jsPDF instance");
+        toast.error("PDF generation failed - autoTable plugin not loaded");
+        return;
+      }
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
+      // Header
+      doc.setFontSize(20);
+      doc.text("Student Activity Report", 20, 20);
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+      doc.text(
+        `Student: ${user?.displayName || user?.email || "Unknown"}`,
+        20,
+        35
+      );
 
-    // Header
-    doc.setFontSize(20);
-    doc.text("Student Activity Report", 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
-    doc.text(
-      `Student: ${user?.displayName || user?.email || "Unknown"}`,
-      20,
-      35
-    );
+      // Summary Statistics
+      doc.setFontSize(14);
+      doc.text("Activity Summary", 20, 50);
 
-    // Summary Statistics
-    doc.setFontSize(14);
-    doc.text("Activity Summary", 20, 50);
-
-    const summaryData = [
-      ["Metric", "Value"],
-      ["Courses Enrolled", stats.coursesEnrolled.toString()],
-      ["Groups Joined", stats.groupsJoined.toString()],
-      ["Assignments Assigned", stats.assignmentsAssigned.toString()],
-      ["Assignments Submitted", stats.assignmentsSubmitted.toString()],
-      ["Average Assignment Mark", `${stats.averageAssignmentMark}%`],
-      ["Submission Rate", `${stats.submissionRate}%`],
-      ["Topics Participated In", stats.topicsParticipatedIn.toString()],
-      ["Pending Assignments", stats.pendingAssignments.toString()],
-    ];
-
-    doc.autoTable({
-      head: [summaryData[0]],
-      body: summaryData.slice(1),
-      startY: 55,
-      theme: "grid",
-      headStyles: { fillColor: [59, 130, 246] },
-    });
-
-    // Courses Section
-    doc.setFontSize(14);
-    doc.text("Enrolled Courses", 20, doc.lastAutoTable.finalY + 15);
-
-    if (courses.length > 0) {
-      const coursesData = courses.map((course) => [
-        course.name,
-        course.courseCode,
-        course.assignmentCount.toString(),
-        course.topicCount.toString(),
-        new Date(course.enrollmentDate).toLocaleDateString(),
-      ]);
-
+      const summaryData = [
+        ["Metric", "Value"],
+        ["Courses Enrolled", stats.coursesEnrolled.toString()],
+        ["Groups Joined", stats.groupsJoined.toString()],
+        ["Assignments Assigned", stats.assignmentsAssigned.toString()],
+        ["Assignments Submitted", stats.assignmentsSubmitted.toString()],
+        ["Average Assignment Mark", `${stats.averageAssignmentMark}%`],
+        ["Submission Rate", `${stats.submissionRate}%`],
+        ["Topics Participated In", stats.topicsParticipatedIn.toString()],
+        ["Pending Assignments", stats.pendingAssignments.toString()],
+      ];
       doc.autoTable({
-        head: [
-          ["Course Name", "Code", "Assignments", "Topics", "Enrolled Date"],
-        ],
-        body: coursesData,
-        startY: doc.lastAutoTable.finalY + 20,
+        head: [summaryData[0]],
+        body: summaryData.slice(1),
+        startY: 55,
         theme: "grid",
-        headStyles: { fillColor: [34, 197, 94] },
+        headStyles: { fillColor: [59, 130, 246] },
       });
+
+      // Courses Section
+      doc.setFontSize(14);
+      doc.text("Enrolled Courses", 20, doc.lastAutoTable.finalY + 15);
+
+      if (courses.length > 0) {
+        const coursesData = courses.map((course) => [
+          course.name,
+          course.courseCode,
+          course.assignmentCount.toString(),
+          course.topicCount.toString(),
+          new Date(course.enrollmentDate).toLocaleDateString(),
+        ]);
+        doc.autoTable({
+          head: [
+            ["Course Name", "Code", "Assignments", "Topics", "Enrolled Date"],
+          ],
+          body: coursesData,
+          startY: doc.lastAutoTable.finalY + 20,
+          theme: "grid",
+          headStyles: { fillColor: [34, 197, 94] },
+        });
+      }
+
+      // Assignments Section
+      doc.setFontSize(14);
+      doc.text("Assignment Details", 20, doc.lastAutoTable.finalY + 15);
+
+      if (assignments.length > 0) {
+        const assignmentsData = assignments.map((assignment) => [
+          assignment.title,
+          assignment.courseName,
+          assignment.status,
+          assignment.submittedGrade
+            ? `${assignment.submittedGrade}/${assignment.maxPoints}`
+            : "Not graded",
+          new Date(assignment.dueDate).toLocaleDateString(),
+        ]);
+        doc.autoTable({
+          head: [["Assignment", "Course", "Status", "Grade", "Due Date"]],
+          body: assignmentsData,
+          startY: doc.lastAutoTable.finalY + 20,
+          theme: "grid",
+          headStyles: { fillColor: [168, 85, 247] },
+        });
+      }
+
+      // Groups Section
+      doc.setFontSize(14);
+      doc.text("Group Memberships", 20, doc.lastAutoTable.finalY + 15);
+
+      if (groups.length > 0) {
+        const groupsData = groups.map((group) => [
+          group.name,
+          group.memberCount.toString(),
+          new Date(group.joinDate).toLocaleDateString(),
+        ]);
+        doc.autoTable({
+          head: [["Group Name", "Members", "Join Date"]],
+          body: groupsData,
+          startY: doc.lastAutoTable.finalY + 20,
+          theme: "grid",
+          headStyles: { fillColor: [245, 158, 11] },
+        });
+      }
+
+      doc.save("student-activity-report.pdf");
+      toast.success("PDF report generated successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF report. Please try again.");
     }
-
-    // Assignments Section
-    doc.setFontSize(14);
-    doc.text("Assignment Details", 20, doc.lastAutoTable.finalY + 15);
-
-    if (assignments.length > 0) {
-      const assignmentsData = assignments.map((assignment) => [
-        assignment.title,
-        assignment.courseName,
-        assignment.status,
-        assignment.submittedGrade
-          ? `${assignment.submittedGrade}/${assignment.maxPoints}`
-          : "Not graded",
-        new Date(assignment.dueDate).toLocaleDateString(),
-      ]);
-
-      doc.autoTable({
-        head: [["Assignment", "Course", "Status", "Grade", "Due Date"]],
-        body: assignmentsData,
-        startY: doc.lastAutoTable.finalY + 20,
-        theme: "grid",
-        headStyles: { fillColor: [168, 85, 247] },
-      });
-    }
-
-    // Groups Section
-    doc.setFontSize(14);
-    doc.text("Group Memberships", 20, doc.lastAutoTable.finalY + 15);
-
-    if (groups.length > 0) {
-      const groupsData = groups.map((group) => [
-        group.name,
-        group.memberCount.toString(),
-        new Date(group.joinDate).toLocaleDateString(),
-      ]);
-
-      doc.autoTable({
-        head: [["Group Name", "Members", "Join Date"]],
-        body: groupsData,
-        startY: doc.lastAutoTable.finalY + 20,
-        theme: "grid",
-        headStyles: { fillColor: [245, 158, 11] },
-      });
-    }
-
-    doc.save("student-activity-report.pdf");
-    toast.success("PDF report generated successfully!");
   };
 
   if (loading) {
