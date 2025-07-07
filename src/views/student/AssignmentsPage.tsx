@@ -2,30 +2,36 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
-import { 
-  Calendar, 
-  Clock, 
-  FileText, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Calendar,
+  Clock,
+  FileText,
+  CheckCircle,
+  AlertCircle,
   XCircle,
   Eye,
   Upload,
   Award,
   BookOpen,
-  ArrowLeft
+  ArrowLeft,
 } from "react-feather";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Assignment } from "@/types/course";
-
+import { API_CONFIG } from "@/config/api";
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  visible: { opacity: 1, y: 0 },
 };
 
 const listVariants = {
@@ -33,15 +39,15 @@ const listVariants = {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.1
-    }
+      staggerChildren: 0.1,
+    },
   },
   hidden: {
     opacity: 0,
     transition: {
-      when: "afterChildren"
-    }
-  }
+      when: "afterChildren",
+    },
+  },
 };
 
 export default function StudentAssignmentsPage() {
@@ -50,7 +56,7 @@ export default function StudentAssignmentsPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const courseFilter = searchParams.get('course');
+  const courseFilter = searchParams.get("course");
 
   useEffect(() => {
     if (user) {
@@ -60,19 +66,19 @@ export default function StudentAssignmentsPage() {
 
   const fetchAssignments = async () => {
     if (!user) return;
-    
+
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/assignments", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/assignments`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch assignments');
+        throw new Error(errorData.error || "Failed to fetch assignments");
       }
 
       const data = await res.json();
@@ -80,14 +86,14 @@ export default function StudentAssignmentsPage() {
 
       // Filter by course if specified
       if (courseFilter) {
-        assignmentList = assignmentList.filter((assignment: Assignment) => 
-          assignment.courseId === courseFilter
+        assignmentList = assignmentList.filter(
+          (assignment: Assignment) => assignment.courseId === courseFilter
         );
       }
 
       setAssignments(assignmentList);
     } catch (error) {
-      console.error('Error fetching assignments:', error);
+      console.error("Error fetching assignments:", error);
       toast.error("Failed to fetch assignments");
     } finally {
       setLoading(false);
@@ -97,38 +103,38 @@ export default function StudentAssignmentsPage() {
   const getSubmissionStatus = (assignment: Assignment) => {
     const now = new Date();
     const dueDate = new Date(assignment.dueDate);
-    
+
     if (assignment.userSubmission) {
-      if (assignment.userSubmission.status === 'graded') {
+      if (assignment.userSubmission.status === "graded") {
         return {
           label: `Graded (${assignment.userSubmission.grade}/${assignment.maxPoints})`,
-          color: 'bg-green-100 text-green-800',
-          icon: Award
+          color: "bg-green-100 text-green-800",
+          icon: Award,
         };
-      } else if (assignment.userSubmission.status === 'late') {
+      } else if (assignment.userSubmission.status === "late") {
         return {
-          label: 'Submitted Late',
-          color: 'bg-yellow-100 text-yellow-800',
-          icon: AlertCircle
+          label: "Submitted Late",
+          color: "bg-yellow-100 text-yellow-800",
+          icon: AlertCircle,
         };
       } else {
         return {
-          label: 'Submitted',
-          color: 'bg-blue-100 text-blue-800',
-          icon: CheckCircle
+          label: "Submitted",
+          color: "bg-blue-100 text-blue-800",
+          icon: CheckCircle,
         };
       }
     } else if (now > dueDate) {
       return {
-        label: 'Overdue',
-        color: 'bg-red-100 text-red-800',
-        icon: XCircle
+        label: "Overdue",
+        color: "bg-red-100 text-red-800",
+        icon: XCircle,
       };
     } else {
       return {
-        label: 'Pending',
-        color: 'bg-gray-100 text-gray-800',
-        icon: Clock
+        label: "Pending",
+        color: "bg-gray-100 text-gray-800",
+        icon: Clock,
       };
     }
   };
@@ -138,13 +144,13 @@ export default function StudentAssignmentsPage() {
     const due = new Date(dueDate);
     const diffTime = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return `${Math.abs(diffDays)} days overdue`;
     } else if (diffDays === 0) {
-      return 'Due today';
+      return "Due today";
     } else if (diffDays === 1) {
-      return 'Due tomorrow';
+      return "Due tomorrow";
     } else {
       return `Due in ${diffDays} days`;
     }
@@ -156,15 +162,15 @@ export default function StudentAssignmentsPage() {
 
   const categorizeAssignments = () => {
     const now = new Date();
-    
-    const upcoming = assignments.filter(a => {
+
+    const upcoming = assignments.filter((a) => {
       const dueDate = new Date(a.dueDate);
       return !a.userSubmission && dueDate > now;
     });
 
-    const submitted = assignments.filter(a => a.userSubmission);
-    
-    const overdue = assignments.filter(a => {
+    const submitted = assignments.filter((a) => a.userSubmission);
+
+    const overdue = assignments.filter((a) => {
       const dueDate = new Date(a.dueDate);
       return !a.userSubmission && dueDate <= now;
     });
@@ -185,7 +191,7 @@ export default function StudentAssignmentsPage() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        <Card 
+        <Card
           className="cursor-pointer hover:shadow-md transition-all duration-200"
           onClick={() => handleViewAssignment(assignment.id)}
         >
@@ -209,17 +215,21 @@ export default function StudentAssignmentsPage() {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="pt-0">
             <CardDescription className="line-clamp-2 mb-4">
               {assignment.description}
             </CardDescription>
-            
+
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center text-gray-600">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(assignment.dueDate).toLocaleDateString()} at {new Date(assignment.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(assignment.dueDate).toLocaleDateString()} at{" "}
+                  {new Date(assignment.dueDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
                 <div className="flex items-center text-gray-600">
                   <Award className="w-4 h-4 mr-1" />
@@ -227,25 +237,31 @@ export default function StudentAssignmentsPage() {
                 </div>
               </div>
 
-              <div className={`text-sm font-medium ${
-                new Date(assignment.dueDate) <= new Date() && !assignment.userSubmission
-                  ? 'text-red-600' 
-                  : 'text-blue-600'
-              }`}>
+              <div
+                className={`text-sm font-medium ${
+                  new Date(assignment.dueDate) <= new Date() &&
+                  !assignment.userSubmission
+                    ? "text-red-600"
+                    : "text-blue-600"
+                }`}
+              >
                 {getDaysUntilDue(assignment.dueDate)}
               </div>
 
               {assignment.userSubmission?.grade !== undefined && (
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-800">Grade</span>
+                    <span className="text-sm font-medium text-green-800">
+                      Grade
+                    </span>
                     <span className="text-lg font-bold text-green-600">
                       {assignment.userSubmission.grade}/{assignment.maxPoints}
                     </span>
                   </div>
                   {assignment.userSubmission.feedback && (
                     <p className="text-sm text-green-700 mt-2">
-                      <span className="font-medium">Feedback:</span> {assignment.userSubmission.feedback}
+                      <span className="font-medium">Feedback:</span>{" "}
+                      {assignment.userSubmission.feedback}
                     </p>
                   )}
                 </div>
@@ -264,19 +280,20 @@ export default function StudentAssignmentsPage() {
                   <Eye className="w-4 h-4 mr-1" />
                   View Details
                 </Button>
-                {!assignment.userSubmission && new Date(assignment.dueDate) > new Date() && (
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewAssignment(assignment.id);
-                    }}
-                  >
-                    <Upload className="w-4 h-4 mr-1" />
-                    Submit
-                  </Button>
-                )}
+                {!assignment.userSubmission &&
+                  new Date(assignment.dueDate) > new Date() && (
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewAssignment(assignment.id);
+                      }}
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      Submit
+                    </Button>
+                  )}
               </div>
             </div>
           </CardContent>
@@ -291,7 +308,7 @@ export default function StudentAssignmentsPage() {
         <div className="container mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/student/courses')}
+            onClick={() => navigate("/student/courses")}
             className="flex items-center gap-2 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -300,7 +317,9 @@ export default function StudentAssignmentsPage() {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-800">My Assignments</h1>
             <p className="text-gray-600 mt-1">
-              {courseFilter ? 'Course assignments' : 'All assignments from your enrolled courses'}
+              {courseFilter
+                ? "Course assignments"
+                : "All assignments from your enrolled courses"}
             </p>
           </div>
 
@@ -311,9 +330,13 @@ export default function StudentAssignmentsPage() {
           ) : assignments.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No assignments</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No assignments
+              </h3>
               <p className="text-gray-500">
-                {courseFilter ? 'No assignments found for this course.' : 'No assignments have been created yet.'}
+                {courseFilter
+                  ? "No assignments found for this course."
+                  : "No assignments have been created yet."}
               </p>
             </div>
           ) : (
@@ -377,4 +400,4 @@ export default function StudentAssignmentsPage() {
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

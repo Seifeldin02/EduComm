@@ -3,6 +3,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { API_CONFIG } from "@/config/api";
 
 interface User {
   uid: string;
@@ -64,10 +65,11 @@ export function UserAutocomplete({
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/users/search?query=${encodeURIComponent(
+        `${API_CONFIG.BASE_URL}/api/users/search?query=${encodeURIComponent(
           query
         )}`,
         {
+          credentials: "include",
           headers: {
             Authorization: `Bearer ${token}`,
           },

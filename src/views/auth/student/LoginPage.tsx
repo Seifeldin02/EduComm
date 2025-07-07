@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
+import { buildApiUrl, API_CONFIG } from "@/config/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -25,9 +26,9 @@ const LoginPage = () => {
       // Get email from backend
       console.log("Student login - Looking up identifier:", identifier);
       const res = await fetch(
-        `http://localhost:3000/api/users/get-email?identifier=${encodeURIComponent(
-          identifier
-        )}`
+        buildApiUrl(API_CONFIG.ENDPOINTS.USER_GET_EMAIL, {
+          identifier: encodeURIComponent(identifier),
+        })
       );
 
       console.log("Student login - Response status:", res.status);
@@ -58,7 +59,7 @@ const LoginPage = () => {
       // Verify role
       console.log("Verifying role for student login...");
       const verifyRes = await fetch(
-        "http://localhost:3000/api/users/verify-role",
+        `${API_CONFIG.BASE_URL}/api/users/verify-role`,
         {
           method: "POST",
           headers: {

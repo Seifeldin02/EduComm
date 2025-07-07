@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
 import { motion } from "framer-motion";
-
+import { API_CONFIG } from "@/config/api";
 import { CourseTopic } from "@/types/course";
 
 const CourseTopicsPage = ({
@@ -58,7 +58,7 @@ const CourseTopicsPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ const CourseTopicsPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics`,
         {
           method: "POST",
           headers: {
@@ -122,7 +122,7 @@ const CourseTopicsPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${selectedTopic.id}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${selectedTopic.id}`,
         {
           method: "PUT",
           headers: {
@@ -158,7 +158,7 @@ const CourseTopicsPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${topicId}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${topicId}`,
         {
           method: "DELETE",
           headers: {

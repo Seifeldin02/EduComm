@@ -3,6 +3,7 @@ import { Group, Member } from "@/types/chat";
 import { toast } from "sonner";
 import { db } from "@/firebase/firebaseConfig";
 import { ref, remove } from "firebase/database";
+import { API_CONFIG } from "@/config/api";
 
 export const useGroupManagement = (groupId: string, user: any | null) => {
   const [groupInfo, setGroupInfo] = useState<Group | null>(null);
@@ -15,8 +16,9 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
       try {
         const token = await user.getIdToken();
         const response = await fetch(
-          `http://localhost:3000/api/groups/${groupId}`,
+          `${API_CONFIG.BASE_URL}/api/groups/${groupId}`,
           {
+            credentials: "include",
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -55,9 +57,10 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
     try {
       const token = await user.getIdToken();
       const response = await fetch(
-        `http://localhost:3000/api/groups/${groupId}`,
+        `${API_CONFIG.BASE_URL}/api/groups/${groupId}`,
         {
           method: "PUT",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -103,9 +106,10 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
     try {
       const token = await user.getIdToken();
       const response = await fetch(
-        `http://localhost:3000/api/groups/${groupId}/members`,
+        `${API_CONFIG.BASE_URL}/api/groups/${groupId}/members`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -173,7 +177,7 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
     try {
       const token = await user.getIdToken();
       const response = await fetch(
-        `http://localhost:3000/api/groups/${groupId}/members/${member.uid}`,
+        `${API_CONFIG.BASE_URL}/api/groups/${groupId}/members/${member.uid}`,
         {
           method: "DELETE",
           headers: {
@@ -191,7 +195,7 @@ export const useGroupManagement = (groupId: string, user: any | null) => {
       // If deleteMessages is true, delete all messages from this member
       if (deleteMessages) {
         const snapshot = await fetch(
-          `http://localhost:3000/api/groups/${groupId}/messages?userId=${member.uid}`,
+          `${API_CONFIG.BASE_URL}/api/groups/${groupId}/messages?userId=${member.uid}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

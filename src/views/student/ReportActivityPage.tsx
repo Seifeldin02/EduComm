@@ -21,7 +21,7 @@ import { createPDFWithAutoTable } from "@/utils/pdfUtils";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 interface StudentActivityStats {
   assignmentsAssigned: number;
   assignmentsSubmitted: number;
@@ -94,7 +94,7 @@ export default function StudentReportActivityPage() {
 
       // Fetch assignments and submissions
       const assignmentsRes = await fetch(
-        "http://localhost:3000/api/assignments",
+        `${API_CONFIG.BASE_URL}/api/assignments`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -105,7 +105,7 @@ export default function StudentReportActivityPage() {
 
       // Fetch submissions for the current user
       const submissionsRes = await fetch(
-        "http://localhost:3000/api/submissions",
+        `${API_CONFIG.BASE_URL}/api/submissions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -175,7 +175,7 @@ export default function StudentReportActivityPage() {
       }
 
       // Fetch courses
-      const coursesRes = await fetch("http://localhost:3000/api/courses", {
+      const coursesRes = await fetch(`${API_CONFIG.BASE_URL}/api/courses`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -192,7 +192,7 @@ export default function StudentReportActivityPage() {
         for (const course of userCourses) {
           // Fetch topics for this course
           const topicsRes = await fetch(
-            `http://localhost:3000/api/courses/${course.id}/topics`,
+            `${API_CONFIG.BASE_URL}/api/courses/${course.id}/topics`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -225,7 +225,7 @@ export default function StudentReportActivityPage() {
       }
 
       // Fetch groups
-      const groupsRes = await fetch("http://localhost:3000/api/groups", {
+      const groupsRes = await fetch(`${API_CONFIG.BASE_URL}/api/groups`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

@@ -16,7 +16,7 @@ import { FileUpload } from "@/components/chat/FileUpload";
 import { toast } from "sonner";
 import { Assignment } from "@/types/course";
 import { Download, Upload, Calendar, FileText, ArrowLeft } from "react-feather";
-
+import { API_CONFIG } from "@/config/api";
 export default function StudentAssignmentDetailPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { user } = useAuthStore();
@@ -40,7 +40,7 @@ export default function StudentAssignmentDetailPage() {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/assignments`, {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/assignments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export default function StudentAssignmentDetailPage() {
       }
       // Fetch submission info
       const subRes = await fetch(
-        `http://localhost:3000/api/assignments/${assignmentId}/submissions`,
+        `${API_CONFIG.BASE_URL}/api/assignments/${assignmentId}/submissions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -87,7 +87,7 @@ export default function StudentAssignmentDetailPage() {
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/assignments/${assignmentId}/submissions`,
+        `${API_CONFIG.BASE_URL}/api/assignments/${assignmentId}/submissions`,
         {
           method: "POST",
           headers: {
@@ -116,7 +116,7 @@ export default function StudentAssignmentDetailPage() {
 
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(`http://localhost:3000${url}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${url}`);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

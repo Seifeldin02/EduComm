@@ -9,7 +9,6 @@ import {
   Users,
   Eye,
   Award,
-  BookOpen,
   Edit,
   Plus,
   CheckCircle,
@@ -28,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Assignment } from "@/types/course";
-
+import { API_CONFIG } from "@/config/api";
 interface Course {
   id: string;
   name: string;
@@ -91,7 +90,7 @@ export default function LecturerAssignmentsPage() {
 
       // Fetch all assignments created by the lecturer
       const assignmentsResponse = await fetch(
-        "http://localhost:3000/api/assignments",
+        `${API_CONFIG.BASE_URL}/api/assignments`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -115,7 +114,7 @@ export default function LecturerAssignmentsPage() {
         try {
           // Fetch submission stats for each assignment
           const submissionsResponse = await fetch(
-            `http://localhost:3000/api/assignments/${assignment.id}/submissions`,
+            `${API_CONFIG.BASE_URL}/api/assignments/${assignment.id}/submissions`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

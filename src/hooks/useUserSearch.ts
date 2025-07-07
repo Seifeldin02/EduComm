@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 export interface SearchUser {
   uid: string;
   email: string;
@@ -47,10 +47,11 @@ export const useUserSearch = (): UserSearchHook => {
         }
 
         const response = await fetch(
-          `http://localhost:3000/api/users/search?query=${encodeURIComponent(
+          `${API_CONFIG.BASE_URL}/api/users/search?query=${encodeURIComponent(
             query
           )}`,
           {
+            credentials: "include",
             headers: {
               Authorization: `Bearer ${token}`,
             },

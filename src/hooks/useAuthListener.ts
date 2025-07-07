@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase/auth";
 import { useAuthStore } from "@/store/useAuthStore";
-
+import { API_CONFIG } from "@/config/api";
 export const useFirebaseAuthListener = () => {
   const setUser = useAuthStore((s) => s.setUser);
   const setRole = useAuthStore((s) => s.setRole);
@@ -18,16 +18,19 @@ export const useFirebaseAuthListener = () => {
       if (user) {
         try {
           const token = await user.getIdToken();
-          
+
           // Just get the user's role without requiring a specific role
-          const res = await fetch("http://localhost:3000/api/users/verify-role", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ requiredRole: null }),
-          });
+          const res = await fetch(
+            `${API_CONFIG.BASE_URL}/api/users/verify-role`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ requiredRole: null }),
+            }
+          );
 
           if (res.ok) {
             const { role } = await res.json();

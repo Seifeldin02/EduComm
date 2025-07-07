@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { User, Lock, Mail, UserCheck } from "react-feather";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { API_CONFIG } from "@/config/api";
 // Schema for profile form
 const profileSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -77,7 +78,7 @@ export default function ProfilePage() {
         try {
           const token = await user.getIdToken();
           const res = await fetch(
-            "http://localhost:3000/api/users/get-username",
+            `${API_CONFIG.BASE_URL}/api/users/get-username`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -109,7 +110,7 @@ export default function ProfilePage() {
       // Update username in backend
       const token = await user.getIdToken();
       const res = await fetch(
-        "http://localhost:3000/api/users/update-profile",
+        `${API_CONFIG.BASE_URL}/api/users/update-profile`,
         {
           method: "POST",
           headers: {

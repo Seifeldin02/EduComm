@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AddMembersModal } from "@/components/modals/AddMembersModal";
 import { Course } from "@/types/course";
-
+import { API_CONFIG } from "@/config/api";
 interface Student {
   uid: string;
   email: string;
@@ -66,7 +66,7 @@ export default function CourseManagePage() {
 
       // Fetch course details
       const courseRes = await fetch(
-        `http://localhost:3000/api/courses/${courseId}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -101,14 +101,17 @@ export default function CourseManagePage() {
     setSaving(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name, description, courseCode }),
-      });
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ name, description, courseCode }),
+        }
+      );
 
       if (res.ok) {
         toast.success("Course updated successfully!");
@@ -140,7 +143,7 @@ export default function CourseManagePage() {
     try {
       const token = await user?.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/students`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/students`,
         {
           method: "DELETE",
           headers: {

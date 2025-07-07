@@ -7,7 +7,7 @@ import { GroupAvatar } from "@/components/ui/GroupAvatar";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle } from "react-feather";
 import { motion } from "framer-motion";
-
+import { API_CONFIG } from "@/config/api";
 interface Group {
   id: string;
   name: string;
@@ -36,27 +36,27 @@ export default function StudentGroupsPage() {
 
   const fetchGroups = async () => {
     if (!user) return;
-    
+
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/groups", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/groups`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
-        mode: 'cors'
+        credentials: "include",
+        mode: "cors",
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch groups');
+        throw new Error(errorData.error || "Failed to fetch groups");
       }
 
       const data = await res.json();
       setGroups(data.groups || []);
     } catch (error) {
-      console.error('Error fetching groups:', error);
+      console.error("Error fetching groups:", error);
       toast.error("Failed to fetch groups");
     } finally {
       setLoading(false);
@@ -71,7 +71,9 @@ export default function StudentGroupsPage() {
     <AnimationWrapper>
       <Layout>
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-8">My Study Groups</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-8">
+            My Study Groups
+          </h1>
 
           {loading ? (
             <div className="flex justify-center items-center py-8">
@@ -92,10 +94,10 @@ export default function StudentGroupsPage() {
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
                 >
                   <div className="relative h-48 bg-gray-100 flex items-center justify-center group">
-                    <GroupAvatar 
-                      name={group.name} 
-                      imageUrl={group.imageUrl} 
-                      size="xl" 
+                    <GroupAvatar
+                      name={group.name}
+                      imageUrl={group.imageUrl}
+                      size="xl"
                       className="w-32 h-32 transition-opacity group-hover:opacity-80"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
@@ -109,7 +111,9 @@ export default function StudentGroupsPage() {
                       {group.name}
                       <MessageCircle className="w-5 h-5 text-blue-500 opacity-75" />
                     </h3>
-                    <p className="text-gray-600 mt-1 line-clamp-2">{group.description}</p>
+                    <p className="text-gray-600 mt-1 line-clamp-2">
+                      {group.description}
+                    </p>
                     <div className="mt-4">
                       <span className="text-sm text-gray-500">
                         {group.members.length} members
@@ -119,7 +123,9 @@ export default function StudentGroupsPage() {
 
                   {/* Members List */}
                   <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Members</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Members
+                    </h4>
                     <div className="space-y-2">
                       {group.members.slice(0, 3).map((member) => (
                         <div
@@ -131,7 +137,9 @@ export default function StudentGroupsPage() {
                           </div>
                           <span>{member.displayName}</span>
                           {member.uid === group.createdBy && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Lecturer</span>
+                            <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                              Lecturer
+                            </span>
                           )}
                         </div>
                       ))}

@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { AddMembersModal } from "@/components/modals/AddMembersModal";
 import { useNavigate } from "react-router-dom";
 import { Course } from "@/types/course";
-
+import { API_CONFIG } from "@/config/api";
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
@@ -83,7 +83,7 @@ export default function LecturerCoursesPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/courses", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/courses`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -111,7 +111,7 @@ export default function LecturerCoursesPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/courses", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/courses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -146,7 +146,7 @@ export default function LecturerCoursesPage() {
     try {
       const token = await user?.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${selectedCourse.id}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${selectedCourse.id}`,
         {
           method: "PUT",
           headers: {
@@ -180,13 +180,16 @@ export default function LecturerCoursesPage() {
 
     try {
       const token = await user?.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (res.ok) {
         toast.success("Course deleted successfully!");

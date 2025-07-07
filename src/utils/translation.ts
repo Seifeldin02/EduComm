@@ -1,5 +1,5 @@
 import { TranslationLanguage } from "@/types/chat";
-
+import { API_CONFIG } from "@/config/api";
 export const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
   { code: "none", name: "No Translation" },
   { code: "en", name: "English" },
@@ -11,7 +11,7 @@ export const TRANSLATION_LANGUAGES: TranslationLanguage[] = [
 export const detectLanguage = async (text: string): Promise<string> => {
   try {
     const response = await fetch(
-      "http://localhost:3000/api/translate/detect",
+      `${API_CONFIG.BASE_URL}/api/translate/detect`,
       {
         method: "POST",
         headers: {
@@ -40,7 +40,7 @@ export const translateText = async (
 ): Promise<string> => {
   try {
     const response = await fetch(
-      "http://localhost:3000/api/translate/translate",
+      `${API_CONFIG.BASE_URL}/api/translate/translate`,
       {
         method: "POST",
         headers: {
@@ -65,4 +65,4 @@ export const translateText = async (
     console.error("Error translating text:", error);
     return text; // Return original text if translation fails
   }
-}; 
+};

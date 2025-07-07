@@ -5,14 +5,12 @@ import { AnimationWrapper } from "@/components/AnimationWrapper";
 import { motion } from "framer-motion";
 import {
   BookOpen,
-  Calendar,
   MessageSquare,
   Users,
   ChevronRight,
   Star,
   TrendingUp,
   Clock,
-  Activity,
   BarChart,
 } from "react-feather";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +22,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-
+import { API_CONFIG } from "@/config/api";
 interface GroupSummary {
   id: string;
   name: string;
@@ -40,7 +38,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<GroupSummary[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
+  const [, setStats] = useState<DashboardStats>({
     totalGroups: 0,
   });
 
@@ -53,11 +51,14 @@ const StudentDashboard = () => {
       try {
         // Fetch groups
         const token = await user.getIdToken();
-        const groupsResponse = await fetch("http://localhost:3000/api/groups", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const groupsResponse = await fetch(
+          `${API_CONFIG.BASE_URL}/api/groups`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!groupsResponse.ok) {
           throw new Error("Failed to fetch groups");

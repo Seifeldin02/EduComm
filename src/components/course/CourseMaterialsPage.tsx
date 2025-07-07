@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
+import { API_CONFIG } from "@/config/api";
 import {
   FileText,
   Plus,
@@ -71,12 +72,15 @@ export default function CourseMaterialsPage({
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/courses/${courseId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (res.ok) {
         const data = await res.json();
@@ -93,7 +97,7 @@ export default function CourseMaterialsPage({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/materials`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/materials`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -126,7 +130,7 @@ export default function CourseMaterialsPage({
       const body: any = { title, description, isVisible };
       if (file) body.fileAttachment = file;
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/materials`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/materials`,
         {
           method: "POST",
           headers: {
@@ -171,7 +175,7 @@ export default function CourseMaterialsPage({
       };
       if (file) body.fileAttachment = file;
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/materials`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/materials`,
         {
           method: "PUT",
           headers: {
@@ -205,7 +209,7 @@ export default function CourseMaterialsPage({
     try {
       const token = await user?.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/materials`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/materials`,
         {
           method: "DELETE",
           headers: {
@@ -230,7 +234,7 @@ export default function CourseMaterialsPage({
 
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(`http://localhost:3000${url}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${url}`);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

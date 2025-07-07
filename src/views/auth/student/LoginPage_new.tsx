@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useAuthStore } from "@/store/useAuthStore";
-
+import { API_CONFIG } from "@/config/api";
 // Lightweight toast notification without external dependencies
 const showToast = (message: string, type: "success" | "error" = "success") => {
   const toast = document.createElement("div");
@@ -70,9 +70,9 @@ const LoginPage = memo(() => {
     try {
       // Get email from identifier
       const res = await fetch(
-        `http://localhost:3000/api/users/get-email?identifier=${encodeURIComponent(
-          identifier
-        )}`,
+        `${
+          API_CONFIG.BASE_URL
+        }/api/users/get-email?identifier=${encodeURIComponent(identifier)}`,
         { headers: { "Content-Type": "application/json" } }
       );
 
@@ -98,7 +98,7 @@ const LoginPage = memo(() => {
       // Role verification
       const token = await userCredential.user.getIdToken();
       const verifyRes = await fetch(
-        "http://localhost:3000/api/users/verify-role",
+        `${API_CONFIG.BASE_URL}/api/users/verify-role`,
         {
           method: "POST",
           headers: {

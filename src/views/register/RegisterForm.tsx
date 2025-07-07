@@ -5,7 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { registerWithEmail } from "@/firebase/auth";
-
+import { API_CONFIG } from "@/config/api";
 type RegisterFormProps = {
   role: "Student" | "Lecturer";
 };
@@ -81,7 +81,7 @@ export default function RegisterForm({ role }: RegisterFormProps) {
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       const usernameCheckRes = await fetch(
-        `http://localhost:3000/api/users/check-username?username=${data.username}`
+        `${API_CONFIG.BASE_URL}/api/users/check-username?username=${data.username}`
       );
 
       if (usernameCheckRes.status === 409) {
@@ -107,7 +107,7 @@ export default function RegisterForm({ role }: RegisterFormProps) {
         data.name
       );
 
-      const res = await fetch("http://localhost:3000/api/users/create", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/users/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -8,6 +8,7 @@ import { Member } from "@/types/chat";
 import { ChatHeader } from "./ChatHeader";
 import { MessagesArea } from "./MessagesArea";
 import { ChatInput } from "./ChatInput";
+import { API_CONFIG } from "@/config/api";
 import { useMessages } from "@/hooks/chat/useMessages";
 import { useTranslation } from "@/hooks/chat/useTranslation";
 import { useGroupManagement } from "@/hooks/chat/useGroupManagement";
@@ -72,8 +73,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
       // Update lastRead in backend
       try {
         const token = await user.getIdToken();
-        await fetch(`http://localhost:3000/api/groups/${groupId}/read`, {
+        await fetch(`${API_CONFIG.BASE_URL}/api/groups/${groupId}/read`, {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

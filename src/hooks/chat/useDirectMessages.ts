@@ -13,7 +13,7 @@ import {
 } from "firebase/database";
 import { Message, FileAttachment } from "@/types/chat";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 const MESSAGES_PER_PAGE = 10;
 
 export const useDirectMessages = (chatId: string, user: any | null) => {
@@ -176,7 +176,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
           lastMessagePreview = "[File]";
         }
         await fetch(
-          `http://localhost:3000/api/chats/${chatId}/notify-message`,
+          `${API_CONFIG.BASE_URL}/api/chats/${chatId}/notify-message`,
           {
             method: "POST",
             headers: {
@@ -226,7 +226,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
           lastMessagePreview = "[File]";
         }
         await fetch(
-          `http://localhost:3000/api/chats/${chatId}/notify-message`,
+          `${API_CONFIG.BASE_URL}/api/chats/${chatId}/notify-message`,
           {
             method: "POST",
             headers: {
@@ -260,7 +260,7 @@ export const useDirectMessages = (chatId: string, user: any | null) => {
       );
       const token = await user.getIdToken();
       const response = await fetch(
-        `http://localhost:3000/api/messages/${messageId}`,
+        `${API_CONFIG.BASE_URL}/api/messages/${messageId}`,
         {
           method: "DELETE",
           headers: {

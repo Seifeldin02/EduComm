@@ -29,8 +29,16 @@ const StudentRegisterPage = lazy(
 const LecturerRegisterPage = lazy(
   () => import("@/views/register/lecturer/RegisterPage")
 );
-const StudentLoginPage = lazy(() => import("@/views/auth/student/LoginPage"));
-const LecturerLoginPage = lazy(() => import("@/views/auth/lecturer/LoginPage"));
+const StudentLoginPage = lazy(() =>
+  import("@/views/auth/student/LoginPage").then((module) => ({
+    default: module.default,
+  }))
+);
+const LecturerLoginPage = lazy(() =>
+  import("@/views/auth/lecturer/LoginPage").then((module) => ({
+    default: module.default,
+  }))
+);
 const StudentDashboard = lazy(() => import("@/views/student/Dashboard"));
 const LecturerDashboard = lazy(() => import("@/views/lecturer/Dashboard"));
 

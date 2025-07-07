@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import GroupChat from "@/components/chat/GroupChat";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 interface Group {
   id: string;
   name: string;
@@ -32,13 +32,16 @@ export default function GroupChatPage() {
 
       try {
         const token = await user.getIdToken();
-        const res = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const res = await fetch(
+          `${API_CONFIG.BASE_URL}/api/groups/${groupId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!res.ok) {
           const errorData = await res.json();

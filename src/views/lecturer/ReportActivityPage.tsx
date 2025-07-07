@@ -10,20 +10,17 @@ import {
   Users,
   BookOpen,
   Award,
-  CheckCircle,
   MessageSquare,
   TrendingUp,
   FileText,
-  BarChart,
   ArrowLeft,
-  Calendar,
   Target,
 } from "react-feather";
 import { createPDFWithAutoTable } from "@/utils/pdfUtils";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 interface LecturerActivityStats {
   coursesCreated: number;
   assignmentsCreated: number;
@@ -97,7 +94,7 @@ export default function LecturerReportActivityPage() {
       const token = await user.getIdToken();
 
       // Fetch courses created by lecturer
-      const coursesRes = await fetch("http://localhost:3000/api/courses", {
+      const coursesRes = await fetch(`${API_CONFIG.BASE_URL}/api/courses`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -106,7 +103,7 @@ export default function LecturerReportActivityPage() {
 
       // Fetch assignments created by lecturer
       const assignmentsRes = await fetch(
-        "http://localhost:3000/api/assignments",
+        `${API_CONFIG.BASE_URL}/api/assignments`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -116,7 +113,7 @@ export default function LecturerReportActivityPage() {
       );
 
       // Fetch groups created by lecturer
-      const groupsRes = await fetch("http://localhost:3000/api/groups", {
+      const groupsRes = await fetch(`${API_CONFIG.BASE_URL}/api/groups`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -125,7 +122,7 @@ export default function LecturerReportActivityPage() {
 
       // Fetch all submissions to get grading statistics
       const submissionsRes = await fetch(
-        "http://localhost:3000/api/submissions",
+        `${API_CONFIG.BASE_URL}/api/submissions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -155,7 +152,7 @@ export default function LecturerReportActivityPage() {
         for (const course of lecturerCourses) {
           // Get topics for this course
           const topicsRes = await fetch(
-            `http://localhost:3000/api/courses/${course.id}/topics`,
+            `${API_CONFIG.BASE_URL}/api/courses/${course.id}/topics`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

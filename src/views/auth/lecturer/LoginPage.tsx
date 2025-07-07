@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 const LoginPage = () => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
@@ -24,9 +24,9 @@ const LoginPage = () => {
     try {
       // Get email from backend
       const res = await fetch(
-        `http://localhost:3000/api/users/get-email?identifier=${encodeURIComponent(
-          identifier
-        )}`
+        `${
+          API_CONFIG.BASE_URL
+        }/api/users/get-email?identifier=${encodeURIComponent(identifier)}`
       );
 
       if (!res.ok) {
@@ -52,7 +52,7 @@ const LoginPage = () => {
 
       // Verify role
       const verifyRes = await fetch(
-        "http://localhost:3000/api/users/verify-role",
+        `${API_CONFIG.BASE_URL}/api/users/verify-role`,
         {
           method: "POST",
           headers: {

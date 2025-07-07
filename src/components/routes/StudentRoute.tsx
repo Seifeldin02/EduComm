@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { JSX, useEffect } from "react";
-
+import { API_CONFIG } from "@/config/api";
 const StudentRoute = ({ children }: { children: JSX.Element }) => {
   const { user, role, isLoading } = useAuthStore();
 
@@ -11,14 +11,17 @@ const StudentRoute = ({ children }: { children: JSX.Element }) => {
 
       try {
         const token = await user.getIdToken();
-        const res = await fetch("http://localhost:3000/api/users/verify-role", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ requiredRole: "Student" }),
-        });
+        const res = await fetch(
+          `${API_CONFIG.BASE_URL}/api/users/verify-role`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ requiredRole: "Student" }),
+          }
+        );
 
         if (!res.ok) {
           console.error("Role verification failed:", await res.json());
@@ -33,7 +36,11 @@ const StudentRoute = ({ children }: { children: JSX.Element }) => {
 
   // Show nothing while loading
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   // If no user is logged in, redirect to the home page

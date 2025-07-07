@@ -1,18 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
-import Layout from '@/components/layout/Layout';
-import { AnimationWrapper } from '@/components/AnimationWrapper';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { Download, Award, Calendar, User, ArrowLeft } from 'react-feather';
-
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
+import Layout from "@/components/layout/Layout";
+import { AnimationWrapper } from "@/components/AnimationWrapper";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Download, Award, Calendar, User, ArrowLeft } from "react-feather";
+import { API_CONFIG } from "@/config/api";
 export default function LecturerAssignmentSubmissionsPage() {
-  const { courseId, assignmentId } = useParams<{ courseId: string, assignmentId: string }>();
+  const { courseId, assignmentId } = useParams<{
+    courseId: string;
+    assignmentId: string;
+  }>();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -33,12 +42,15 @@ export default function LecturerAssignmentSubmissionsPage() {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/submissions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}/api/assignments/${assignmentId}/submissions`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (res.ok) {
         const data = await res.json();
         setSubmissions(data.submissions || []);
@@ -54,10 +66,10 @@ export default function LecturerAssignmentSubmissionsPage() {
 
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(`http://localhost:3000${url}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${url}`);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
@@ -65,34 +77,43 @@ export default function LecturerAssignmentSubmissionsPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      toast.error('Failed to download file');
+      toast.error("Failed to download file");
     }
   };
 
   const handleGrade = async (submissionId: string) => {
     if (!user || !assignmentId) return;
-    setGrading(prev => ({ ...prev, [submissionId]: true }));
+    setGrading((prev) => ({ ...prev, [submissionId]: true }));
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/assignments/${assignmentId}/submissions`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ submissionId, grade: grade[submissionId], feedback: feedback[submissionId] }),
-      });
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}/api/assignments/${assignmentId}/submissions`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            submissionId,
+            grade: grade[submissionId],
+            feedback: feedback[submissionId],
+          }),
+        }
+      );
       if (res.ok) {
-        toast.success('Submission graded!');
+        toast.success("Submission graded!");
         fetchSubmissions();
       } else {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to grade submission');
+        throw new Error(data.error || "Failed to grade submission");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to grade submission');
+      toast.error(
+        error instanceof Error ? error.message : "Failed to grade submission"
+      );
     } finally {
-      setGrading(prev => ({ ...prev, [submissionId]: false }));
+      setGrading((prev) => ({ ...prev, [submissionId]: false }));
     }
   };
 
@@ -114,7 +135,9 @@ export default function LecturerAssignmentSubmissionsPage() {
         <div className="container mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/lecturer/courses/${courseId}/assignments`)}
+            onClick={() =>
+              navigate(`/lecturer/courses/${courseId}/assignments`)
+            }
             className="flex items-center gap-2 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -126,11 +149,15 @@ export default function LecturerAssignmentSubmissionsPage() {
                 <Award className="w-5 h-5 text-green-500" />
                 Assignment Submissions
               </CardTitle>
-              <CardDescription>All student submissions for this assignment</CardDescription>
+              <CardDescription>
+                All student submissions for this assignment
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {submissions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No submissions yet.</div>
+                <div className="text-center py-8 text-gray-500">
+                  No submissions yet.
+                </div>
               ) : (
                 <div className="space-y-6">
                   {submissions.map((sub) => (
@@ -139,14 +166,19 @@ export default function LecturerAssignmentSubmissionsPage() {
                         <div className="flex items-center gap-2 mb-2">
                           <User className="w-4 h-4 text-blue-500" />
                           <span className="font-medium">{sub.studentName}</span>
-                          <span className="text-xs text-gray-500">({sub.studentEmail})</span>
+                          <span className="text-xs text-gray-500">
+                            ({sub.studentEmail})
+                          </span>
                           {sub.isLate && (
-                            <Badge variant="destructive" className="ml-2">Late</Badge>
+                            <Badge variant="destructive" className="ml-2">
+                              Late
+                            </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <Calendar className="w-4 h-4" />
-                          Submitted: {new Date(sub.submittedAt).toLocaleString()}
+                          Submitted:{" "}
+                          {new Date(sub.submittedAt).toLocaleString()}
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -154,7 +186,12 @@ export default function LecturerAssignmentSubmissionsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownload(sub.fileAttachment.url, sub.fileAttachment.originalName)}
+                            onClick={() =>
+                              handleDownload(
+                                sub.fileAttachment.url,
+                                sub.fileAttachment.originalName
+                              )
+                            }
                           >
                             <Download className="w-4 h-4 mr-1" />
                             {sub.fileAttachment.originalName}
@@ -162,7 +199,7 @@ export default function LecturerAssignmentSubmissionsPage() {
                         )}
                         <form
                           className="mt-4 space-y-2"
-                          onSubmit={e => {
+                          onSubmit={(e) => {
                             e.preventDefault();
                             handleGrade(sub.id);
                           }}
@@ -171,30 +208,47 @@ export default function LecturerAssignmentSubmissionsPage() {
                             <label className="text-sm font-medium">Grade</label>
                             <Input
                               type="number"
-                              value={grade[sub.id] ?? sub.grade ?? ''}
-                              onChange={e => setGrade(prev => ({ ...prev, [sub.id]: Number(e.target.value) }))}
+                              value={grade[sub.id] ?? sub.grade ?? ""}
+                              onChange={(e) =>
+                                setGrade((prev) => ({
+                                  ...prev,
+                                  [sub.id]: Number(e.target.value),
+                                }))
+                              }
                               min={0}
                               max={1000}
                               className="w-24"
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-sm font-medium">Feedback</label>
+                            <label className="text-sm font-medium">
+                              Feedback
+                            </label>
                             <Textarea
-                              value={feedback[sub.id] ?? sub.feedback ?? ''}
-                              onChange={e => setFeedback(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                              value={feedback[sub.id] ?? sub.feedback ?? ""}
+                              onChange={(e) =>
+                                setFeedback((prev) => ({
+                                  ...prev,
+                                  [sub.id]: e.target.value,
+                                }))
+                              }
                               placeholder="Enter feedback (optional)"
                             />
                           </div>
                           <Button type="submit" disabled={grading[sub.id]}>
-                            {grading[sub.id] ? 'Saving...' : 'Save Grade'}
+                            {grading[sub.id] ? "Saving..." : "Save Grade"}
                           </Button>
                         </form>
                         {sub.grade !== undefined && (
                           <div className="mt-2 bg-green-50 p-2 rounded">
-                            <span className="font-medium text-green-700">Grade:</span> {sub.grade}
+                            <span className="font-medium text-green-700">
+                              Grade:
+                            </span>{" "}
+                            {sub.grade}
                             {sub.feedback && (
-                              <div className="text-green-700 mt-1">Feedback: {sub.feedback}</div>
+                              <div className="text-green-700 mt-1">
+                                Feedback: {sub.feedback}
+                              </div>
                             )}
                           </div>
                         )}
@@ -209,4 +263,4 @@ export default function LecturerAssignmentSubmissionsPage() {
       </Layout>
     </AnimationWrapper>
   );
-} 
+}

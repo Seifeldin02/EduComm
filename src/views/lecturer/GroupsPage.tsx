@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { GroupAvatar } from "@/components/ui/GroupAvatar";
 import { useNavigate } from "react-router-dom";
 import { AddMembersModal } from "@/components/modals/AddMembersModal";
-
+import { API_CONFIG } from "@/config/api";
 interface Group {
   id: string;
   name: string;
@@ -81,7 +81,7 @@ export default function GroupsPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/groups", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/groups`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -112,7 +112,7 @@ export default function GroupsPage() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/groups", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export default function GroupsPage() {
     try {
       const token = await user?.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/groups/${selectedGroup.id}`,
+        `${API_CONFIG.BASE_URL}/api/groups/${selectedGroup.id}`,
         {
           method: "PUT",
           headers: {
@@ -188,7 +188,7 @@ export default function GroupsPage() {
 
     try {
       const token = await user?.getIdToken();
-      const res = await fetch(`http://localhost:3000/api/groups/${groupId}`, {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/groups/${groupId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

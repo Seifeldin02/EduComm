@@ -13,7 +13,7 @@ import {
 } from "firebase/database";
 import { Message, FileAttachment } from "@/types/chat";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 const MESSAGES_PER_PAGE = 10;
 
 export const useMessages = (groupId: string, user: any | null) => {
@@ -173,9 +173,10 @@ export const useMessages = (groupId: string, user: any | null) => {
           lastMessagePreview = "[File]";
         }
         await fetch(
-          `http://localhost:3000/api/groups/${groupId}/notify-message`,
+          `${API_CONFIG.BASE_URL}/api/groups/${groupId}/notify-message`,
           {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
@@ -222,9 +223,10 @@ export const useMessages = (groupId: string, user: any | null) => {
           lastMessagePreview = "[File]";
         }
         await fetch(
-          `http://localhost:3000/api/groups/${groupId}/notify-message`,
+          `${API_CONFIG.BASE_URL}/api/groups/${groupId}/notify-message`,
           {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
@@ -256,9 +258,10 @@ export const useMessages = (groupId: string, user: any | null) => {
       );
       const token = await user.getIdToken();
       const response = await fetch(
-        `http://localhost:3000/api/groups/${groupId}/messages/${messageId}`,
+        `${API_CONFIG.BASE_URL}/api/groups/${groupId}/messages/${messageId}`,
         {
           method: "DELETE",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

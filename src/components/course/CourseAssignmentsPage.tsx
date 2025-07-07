@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
+import { API_CONFIG } from "@/config/api";
 import {
   Card,
   CardContent,
@@ -60,7 +61,7 @@ export default function CourseAssignmentsPage() {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/api/assignments", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/assignments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -98,7 +99,7 @@ export default function CourseAssignmentsPage() {
         allowLateSubmission,
       };
       if (file) body.fileAttachment = file;
-      const res = await fetch("http://localhost:3000/api/assignments", {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/assignments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -222,7 +223,7 @@ export default function CourseAssignmentsPage() {
                           size="sm"
                           onClick={() => {
                             window.open(
-                              `http://localhost:3000${
+                              `${API_CONFIG.BASE_URL}${
                                 assignment.fileAttachment!.url
                               }`,
                               "_blank"

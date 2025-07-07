@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
-
+import { API_CONFIG } from "@/config/api";
 export interface AddMembersHook {
   isAdding: boolean;
   addMembers: (
@@ -43,8 +43,8 @@ export const useAddMembers = (): AddMembersHook => {
       // Determine the correct API endpoint based on target type
       const endpoint =
         targetType === "course"
-          ? `http://localhost:3000/api/courses/${targetId}/students`
-          : `http://localhost:3000/api/groups/${targetId}/members`;
+          ? `${API_CONFIG.BASE_URL}/api/courses/${targetId}/students`
+          : `${API_CONFIG.BASE_URL}/api/groups/${targetId}/members`;
 
       // Determine the correct body format based on target type
       const requestBody =

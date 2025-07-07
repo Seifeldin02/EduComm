@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
 import { FileAttachment } from "@/types/chat";
+import { API_CONFIG } from "@/config/api";
 
 interface FileUploadProps {
   onFileUploaded: (file: FileAttachment) => void;
@@ -36,8 +37,9 @@ export function FileUpload({ onFileUploaded, disabled }: FileUploadProps) {
       formData.append("file", file);
 
       const token = await user.getIdToken();
-      const response = await fetch("http://localhost:3000/api/upload", {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/upload`, {
         method: "POST",
+        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
         },

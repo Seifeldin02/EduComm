@@ -27,7 +27,7 @@ import { CourseTopic, TopicReply } from "@/types/course";
 import Layout from "@/components/layout/Layout";
 import { AnimationWrapper } from "@/components/AnimationWrapper";
 import { motion } from "framer-motion";
-
+import { API_CONFIG } from "@/config/api";
 const TopicDetailPage = ({
   userRole,
 }: {
@@ -58,7 +58,7 @@ const TopicDetailPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${topicId}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${topicId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,7 +88,7 @@ const TopicDetailPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${topicId}/replies`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${topicId}/replies`,
         {
           method: "POST",
           headers: {
@@ -119,7 +119,7 @@ const TopicDetailPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${topicId}/replies/${editReply.id}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${topicId}/replies/${editReply.id}`,
         {
           method: "PUT",
           headers: {
@@ -152,7 +152,7 @@ const TopicDetailPage = ({
     try {
       const token = await user.getIdToken();
       const res = await fetch(
-        `http://localhost:3000/api/courses/${courseId}/topics/${topicId}/replies/${replyId}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}/topics/${topicId}/replies/${replyId}`,
         {
           method: "DELETE",
           headers: {

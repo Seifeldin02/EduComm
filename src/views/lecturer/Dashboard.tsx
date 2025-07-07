@@ -25,7 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
+import { API_CONFIG } from "@/config/api";
 interface DashboardStats {
   totalGroups: number;
   totalStudents: number;
@@ -57,11 +57,14 @@ export default function LecturerDashboard() {
       try {
         // Fetch groups
         const token = await user.getIdToken();
-        const groupsResponse = await fetch("http://localhost:3000/api/groups", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const groupsResponse = await fetch(
+          `${API_CONFIG.BASE_URL}/api/groups`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!groupsResponse.ok) {
           throw new Error("Failed to fetch groups");

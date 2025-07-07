@@ -2,46 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      // Exclude node_modules from React transform
-      exclude: /node_modules/,
-    }),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Development server optimizations
   server: {
-    // Optimize HMR
+    host: true,
+    port: 5173,
+    strictPort: false,
     hmr: {
-      overlay: true,
+      port: 5173,
     },
+    allowedHosts: ["b62b-180-75-6-105.ngrok-free.app"],
+    cors: true,
   },
-  // Dependency optimization
-  optimizeDeps: {
-    // Pre-bundle these critical dependencies for faster dev server startup
-    include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "firebase/auth",
-      "zustand",
-    ],
-    // Exclude heavy dependencies that should be lazy loaded
-    exclude: ["sonner", "framer-motion", "jspdf", "jspdf-autotable"],
-    // Force re-optimization in development
-    force: true,
+  preview: {
+    host: true,
+    port: 5173, // ✅ This ensures preview runs on 5173
+    strictPort: false,
   },
-  // Performance optimizations
   build: {
-    // Target modern browsers for smaller bundle size
     target: "es2020",
-    // Enable aggressive minification
     minify: "terser",
     terserOptions: {
       compress: {
@@ -54,91 +38,40 @@ export default defineConfig({
         safari10: true,
       },
     },
-    // Generate source maps only in development
-    sourcemap: process.env.NODE_ENV === "development",
-    // Optimize CSS aggressively
-    cssMinify: "lightningcss",
-    // Advanced chunk splitting for optimal caching
+    sourcemap: false,
     rollupOptions: {
       output: {
-        // Improved manual chunks for better performance
-        manualChunks: (id) => {
-          // Core React libraries
-          if (
-            id.includes("node_modules/react/") ||
-            id.includes("node_modules/react-dom/")
-          ) {
-            return "react-core";
-          }
-          // Router
-          if (id.includes("react-router")) {
-            return "router";
-          }
-          // Firebase
-          if (id.includes("firebase")) {
-            return "firebase";
-          }
-          // Heavy UI libraries (only load when needed)
-          if (id.includes("framer-motion") || id.includes("sonner")) {
-            return "ui-heavy";
-          }
-          // Chart/visualization libraries
-          if (id.includes("chart") || id.includes("d3")) {
-            return "charts";
-          }
-          // Utility libraries
-          if (
-            id.includes("lodash") ||
-            id.includes("date-fns") ||
-            id.includes("uuid")
-          ) {
-            return "utils";
-          }
-          // Auth-related
-          if (id.includes("zustand") || id.includes("auth")) {
-            return "auth";
-          }
-          // All other vendor libraries
-          if (id.includes("node_modules")) {
-            return "vendor";
-          }
-        },
-        // Optimize chunk naming
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId
-            ? chunkInfo.facadeModuleId
-                .split("/")
-                .pop()
-                ?.replace(".tsx", "")
-                .replace(".ts", "") || "chunk"
-            : "chunk";
-          return `js/${facadeModuleId}-[hash].js`;
+        manualChunks: {
+          "react-core": ["react", "react-dom"],
+          router: ["react-router-dom"],
+          firebase: ["firebase/auth", "firebase/firestore", "firebase/storage"],
+          ui: ["framer-motion", "sonner"],
+          utils: ["zustand"],
         },
         entryFileNames: "js/[name]-[hash].js",
+        chunkFileNames: "js/[name]-[hash].js",
         assetFileNames: (assetInfo) => {
           if (assetInfo.name?.endsWith(".css")) {
             return "css/[name]-[hash][extname]";
           }
+          if (
+            assetInfo.name?.endsWith(".tsx") ||
+            assetInfo.name?.endsWith(".ts")
+          ) {
+            return "js/[name]-[hash].js";
+          }
           return "assets/[name]-[hash][extname]";
         },
       },
-      // Tree-shake unused code aggressively
-      treeshake: {
-        moduleSideEffects: false,
-        propertyReadSideEffects: false,
-        unknownGlobalSideEffects: false,
-      },
     },
-    // Preload module directives
-    modulePreload: {
-      polyfill: true,
-    },
-    // Optimize asset processing
-    assetsInlineLimit: 4096, // Inline small assets
-    copyPublicDir: true,
   },
-  // Enable CSS code splitting
-  css: {
-    devSourcemap: process.env.NODE_ENV === "development",
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "firebase/auth",
+      "zustand",
+    ],
   },
 });

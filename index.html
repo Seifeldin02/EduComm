@@ -8,8 +8,12 @@
     />
 
     <!-- Critical Performance Optimization -->
-    <link rel="preconnect" href="http://localhost:3000" crossorigin />
-    <link rel="dns-prefetch" href="http://localhost:3000" />
+    <link
+      rel="preconnect"
+      href="https://educomm-backend.vercel.app/"
+      crossorigin
+    />
+    <link rel="dns-prefetch" href="https://educomm-backend.vercel.app/" />
 
     <!-- Icons and Favicons - Optimized -->
     <link rel="icon" type="image/svg+xml" href="/EduCommIcon.svg" sizes="any" />
@@ -395,14 +399,7 @@
       }
     </script>
 
-    <!-- Main application script with performance optimization -->
-    <script type="module">
-      // Lazy load the main application
-      import("/src/main.tsx").catch((err) => {
-        console.error("Failed to load app:", err);
-        document.body.innerHTML =
-          '<div style="text-align:center;padding:2rem;font-family:sans-serif"><h1>Unable to load application</h1><p>Please refresh the page or check your connection.</p></div>';
-      });
-    </script>
+    <!-- Main application script -->
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

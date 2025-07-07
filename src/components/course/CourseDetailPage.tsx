@@ -13,6 +13,7 @@ import {
   Award,
   User,
 } from "react-feather";
+import { API_CONFIG } from "@/config/api";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -53,7 +54,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
 
       // Fetch course details
       const courseRes = await fetch(
-        `http://localhost:3000/api/courses/${courseId}`,
+        `${API_CONFIG.BASE_URL}/api/courses/${courseId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
       // Fetch materials
       try {
         const materialsRes = await fetch(
-          `http://localhost:3000/api/courses/${courseId}/materials`,
+          `${API_CONFIG.BASE_URL}/api/courses/${courseId}/materials`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -96,7 +97,7 @@ export default function CourseDetailPage({ userRole }: CourseDetailPageProps) {
       // Fetch assignments - get all assignments and filter by courseId
       try {
         const assignmentsRes = await fetch(
-          `http://localhost:3000/api/assignments`,
+          `${API_CONFIG.BASE_URL}/api/assignments`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
